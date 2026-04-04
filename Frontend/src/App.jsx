@@ -8,6 +8,7 @@ import Inicio from './pages/admin/Inicio_Admin';
 import Usuarios from './pages/admin/Usuarios';
 import Modalidades from './pages/admin/Modalidades';
 import Reportes from './pages/admin/Reportes';
+import Registro from './pages/Registro'; // 1. IMPORTAR ARRIBA
 
 function App() {
   return (
@@ -17,6 +18,9 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         
         <Route path="/login" element={<Login />} />
+
+        {/* Ruta para el registro */}
+        <Route path="/registro" element={<Registro />} />
         
         {/* Rutas protegidas para el administrador */}
         <Route path="/dashboard" element={

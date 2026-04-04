@@ -11,3 +11,5 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/dashboard-stats', [DashboardController::class, 'index'])->middleware('auth:sanctum');
 
 Route::post('/admin/aprobar/{id}', [AprobacionController::class, 'aprobar']);
+
+Route::post('/registro', [AuthController::class, 'register']);
