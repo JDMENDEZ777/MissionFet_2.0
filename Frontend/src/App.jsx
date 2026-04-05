@@ -3,12 +3,13 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
-
+import AprobacionUsuarios from './pages/admin/AprobacionUsuarios';
 import Inicio from './pages/admin/Inicio_Admin';
 import Usuarios from './pages/admin/Usuarios';
 import Modalidades from './pages/admin/Modalidades';
 import Reportes from './pages/admin/Reportes';
 import Registro from './pages/Registro'; // 1. IMPORTAR ARRIBA
+import GestionUsuarios from './pages/admin/GestionUsuarios'; // Ajusta la ruta si es diferente
 
 function App() {
   return (
@@ -21,6 +22,10 @@ function App() {
 
         {/* Ruta para el registro */}
         <Route path="/registro" element={<Registro />} />
+
+        <Route path="/aprobacion" element={<AprobacionUsuarios />} />
+
+        <Route path="/usuarios" element={<GestionUsuarios />} />
         
         {/* Rutas protegidas para el administrador */}
         <Route path="/dashboard" element={
