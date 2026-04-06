@@ -20,7 +20,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/aprobaciones', [AprobacionController::class, 'index']);
     Route::post('/admin/aprobaciones/{id}/aprobar', [AprobacionController::class, 'aprobar']);
     Route::post('/admin/aprobaciones/{id}/rechazar', [AprobacionController::class, 'rechazar']);
+   
     Route::get('/admin/usuarios', [App\Http\Controllers\Admin\UsuarioController::class, 'index']);
     Route::put('/admin/usuarios/{id}', [App\Http\Controllers\Admin\UsuarioController::class, 'update']);
     Route::delete('/admin/usuarios/{id}', [App\Http\Controllers\Admin\UsuarioController::class, 'destroy']);
+
+    // Rutas de Seminarios
+    Route::get('/admin/tutores', [App\Http\Controllers\Admin\SeminarioController::class, 'getTutores']);
+    Route::get('/admin/seminarios', [App\Http\Controllers\Admin\SeminarioController::class, 'index']);
+    Route::post('/admin/seminarios', [App\Http\Controllers\Admin\SeminarioController::class, 'store']);
+
+    // Rutas de Inscripciones a Seminarios
+    Route::get('/admin/seminarios/{id}', [App\Http\Controllers\Admin\SeminarioController::class, 'show']);
+    Route::get('/admin/seminarios/{id}/disponibles', [App\Http\Controllers\Admin\SeminarioController::class, 'getEstudiantesDisponibles']);
+    Route::post('/admin/seminarios/{id}/inscribir', [App\Http\Controllers\Admin\SeminarioController::class, 'inscribir']);
+    Route::delete('/admin/seminarios/{id}/inscripcion/{estudiante_id}', [App\Http\Controllers\Admin\SeminarioController::class, 'eliminarInscripcion']);
+
+    // --- RUTAS PARA EDITAR Y ELIMINAR SEMINARIO ---
+    Route::put('/admin/seminarios/{id}', [App\Http\Controllers\Admin\SeminarioController::class, 'update']);
+    Route::delete('/admin/seminarios/{id}', [App\Http\Controllers\Admin\SeminarioController::class, 'destroy']);
+
+    // --- RUTAS DE PROYECTOS ---
+    Route::get('/admin/proyectos/form-data', [App\Http\Controllers\Admin\ProyectoController::class, 'getFormData']);
+    Route::get('/admin/proyectos', [App\Http\Controllers\Admin\ProyectoController::class, 'index']);
+    Route::post('/admin/proyectos', [App\Http\Controllers\Admin\ProyectoController::class, 'store']);
+
 });

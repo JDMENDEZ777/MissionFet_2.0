@@ -10,6 +10,8 @@ import Modalidades from './pages/admin/Modalidades';
 import Reportes from './pages/admin/Reportes';
 import Registro from './pages/Registro'; // 1. IMPORTAR ARRIBA
 import GestionUsuarios from './pages/admin/GestionUsuarios'; // Ajusta la ruta si es diferente
+import GestionSeminario from './pages/admin/GestionSeminario'; // Nueva página para gestionar seminarios
+import GestionProyectos from './pages/admin/GestionProyectos'; // Nueva página para gestionar proyectos
 
 function App() {
   return (
@@ -26,6 +28,10 @@ function App() {
         <Route path="/aprobacion" element={<AprobacionUsuarios />} />
 
         <Route path="/usuarios" element={<GestionUsuarios />} />
+
+        <Route path="/seminarios" element={<GestionSeminario />} />
+
+        <Route path="/proyectos" element={<GestionProyectos />} />
         
         {/* Rutas protegidas para el administrador */}
         <Route path="/dashboard" element={
