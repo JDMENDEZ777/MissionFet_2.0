@@ -7,7 +7,6 @@ import './TutorSeminario.css';
 // Utilidades auxiliares
 // ─────────────────────────────────────────────────────────────
 
-/** Devuelve el icono FontAwesome según el tipo de actividad */
 const iconoTipo = (tipo) => {
   const iconos = {
     tarea: 'fa-clipboard-list',
@@ -19,12 +18,13 @@ const iconoTipo = (tipo) => {
   return iconos[tipo] || 'fa-tasks';
 };
 
-/** Formatea una fecha ISO en formato legible en español */
 const formatFecha = (dateStr) => {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('es-CO', {
-    year: 'numeric', month: 'short', day: 'numeric',
-  });
+  const fecha = new Date(dateStr);
+  const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  
+  return `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}`;
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -34,17 +34,16 @@ const formatFecha = (dateStr) => {
 export default function TutorSeminario() {
   const navigate = useNavigate();
 
-  // ID del seminario: en un proyecto real vendría de useParams()
-  // De momento lo leemos del localStorage (guardado al hacer login)
   const seminarioId = localStorage.getItem('seminario_id') || 1;
   const userName    = localStorage.getItem('user_name') || 'Tutor';
+  const userAvatar  = localStorage.getItem('user_avatar') || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
 
   // ── Estado global ──────────────────────────────────────────
   const [seccion, setSeccion]       = useState('inicio');   // inicio | actividades | clases | materiales
   const [filtro, setFiltro]         = useState('todas');
   const [loading, setLoading]       = useState(false);
 
-  // Datos de cada sección
+  // Datos
   const [stats, setStats]             = useState(null);
   const [proximaClase, setProximaClase] = useState(null);
   const [ultimasEntregas, setUltimasEntregas] = useState([]);
@@ -52,16 +51,10 @@ export default function TutorSeminario() {
   const [clases, setClases]           = useState([]);
   const [materiales, setMateriales]   = useState([]);
 
-  // Entregas de una actividad para calificar
-  const [entregasModal, setEntregasModal]   = useState(null);  // null = cerrado
-  const [actividadModal, setActividadModal] = useState(null);
-
-  // Modales de formulario
+  // Modales
   const [modalActividad, setModalActividad] = useState(false);
   const [modalClase, setModalClase]         = useState(false);
   const [modalMaterial, setModalMaterial]   = useState(false);
-
-  // Edición
   const [editando, setEditando] = useState(null);
 
   // Formularios
@@ -76,9 +69,6 @@ export default function TutorSeminario() {
   const [formMaterial, setFormMaterial] = useState({
     titulo: '', descripcion: '', tipo: 'documento', archivos: [],
   });
-
-  // Calificaciones
-  const [calificaciones, setCalificaciones] = useState({});
 
   // ── Carga de datos ─────────────────────────────────────────
   const cargarDashboard = useCallback(async () => {
@@ -122,15 +112,14 @@ export default function TutorSeminario() {
     finally { setLoading(false); }
   }, [seminarioId]);
 
-  // Cargar datos al cambiar de sección
   useEffect(() => {
     if (seccion === 'inicio')       cargarDashboard();
-    if (seccion === 'actividades')  cargarActividades();
-    if (seccion === 'clases')       cargarClases();
-    if (seccion === 'materiales')   cargarMateriales();
+    else if (seccion === 'actividades')  cargarActividades();
+    else if (seccion === 'clases')       cargarClases();
+    else if (seccion === 'materiales')   cargarMateriales();
   }, [seccion, filtro, cargarDashboard, cargarActividades, cargarClases, cargarMateriales]);
 
-  // ── Acciones de Actividad ──────────────────────────────────
+  // ── Acciones (Simplificadas para el Rediseño) ───────────────
   const submitActividad = async (e) => {
     e.preventDefault();
     const fd = new FormData();
@@ -139,107 +128,49 @@ export default function TutorSeminario() {
       else fd.append(k, v);
     });
     try {
-      if (editando) {
-        await api.put(`/tutor/seminarios/${seminarioId}/actividades/${editando}`, fd);
-      } else {
-        await api.post(`/tutor/seminarios/${seminarioId}/actividades`, fd);
-      }
+      if (editando) await api.post(`/tutor/seminarios/${seminarioId}/actividades/${editando}?_method=PUT`, fd);
+      else await api.post(`/tutor/seminarios/${seminarioId}/actividades`, fd);
       setModalActividad(false);
-      resetFormActividad();
-      cargarActividades();
+      resetForms();
+      if (seccion === 'actividades') cargarActividades();
+      else cargarDashboard();
     } catch (err) { console.error(err); }
   };
 
-  const eliminarActividad = async (id) => {
-    if (!confirm('¿Eliminar esta actividad? Se perderán todas las entregas asociadas.')) return;
-    await api.delete(`/tutor/seminarios/${seminarioId}/actividades/${id}`);
-    cargarActividades();
-  };
-
-  const abrirEntregas = async (actividad) => {
-    try {
-      const { data } = await api.get(
-        `/tutor/seminarios/${seminarioId}/actividades/${actividad.id}/entregas`
-      );
-      setActividadModal(data.actividad);
-      setEntregasModal(data.entregas || []);
-      setCalificaciones({});
-    } catch (err) { console.error(err); }
-  };
-
-  const calificarEntrega = async (entregaId) => {
-    const cal = calificaciones[entregaId];
-    if (!cal) return;
-    try {
-      await api.post(
-        `/tutor/seminarios/${seminarioId}/actividades/${actividadModal.id}/entregas/${entregaId}/calificar`,
-        { calificacion: cal.nota, comentario_tutor: cal.comentario || '' }
-      );
-      // Refrescar lista de entregas
-      const { data } = await api.get(
-        `/tutor/seminarios/${seminarioId}/actividades/${actividadModal.id}/entregas`
-      );
-      setEntregasModal(data.entregas || []);
-    } catch (err) { console.error(err); }
-  };
-
-  // ── Acciones de Clase Virtual ──────────────────────────────
   const submitClase = async (e) => {
     e.preventDefault();
     try {
-      if (editando) {
-        await api.put(`/tutor/seminarios/${seminarioId}/clases/${editando}`, formClase);
-      } else {
-        await api.post(`/tutor/seminarios/${seminarioId}/clases`, formClase);
-      }
+      if (editando) await api.put(`/tutor/seminarios/${seminarioId}/clases/${editando}`, formClase);
+      else await api.post(`/tutor/seminarios/${seminarioId}/clases`, formClase);
       setModalClase(false);
-      resetFormClase();
-      cargarClases();
+      resetForms();
+      if (seccion === 'clases') cargarClases();
+      else cargarDashboard();
     } catch (err) { console.error(err); }
   };
 
-  const eliminarClase = async (id) => {
-    if (!confirm('¿Eliminar esta clase virtual?')) return;
-    await api.delete(`/tutor/seminarios/${seminarioId}/clases/${id}`);
-    cargarClases();
-  };
-
-  // ── Acciones de Material ───────────────────────────────────
   const submitMaterial = async (e) => {
     e.preventDefault();
     const fd = new FormData();
-    fd.append('titulo', formMaterial.titulo);
-    fd.append('descripcion', formMaterial.descripcion);
-    fd.append('tipo', formMaterial.tipo);
-    formMaterial.archivos.forEach((f) => fd.append('archivos[]', f));
+    Object.entries(formMaterial).forEach(([k, v]) => {
+      if (k === 'archivos') v.forEach((f) => fd.append('archivos[]', f));
+      else fd.append(k, v);
+    });
     try {
       await api.post(`/tutor/seminarios/${seminarioId}/materiales`, fd);
       setModalMaterial(false);
-      resetFormMaterial();
-      cargarMateriales();
+      resetForms();
+      if (seccion === 'materiales') cargarMateriales();
     } catch (err) { console.error(err); }
   };
 
-  const eliminarMaterial = async (id) => {
-    if (!confirm('¿Eliminar este material?')) return;
-    await api.delete(`/tutor/seminarios/${seminarioId}/materiales/${id}`);
-    cargarMateriales();
-  };
-
-  // ── Reset de formularios ───────────────────────────────────
-  const resetFormActividad = () => {
+  const resetForms = () => {
     setFormActividad({ titulo: '', descripcion: '', fecha_limite: '', hora_limite: '23:59', tipo: 'tarea', puntaje: 5, permitir_entregas_tarde: false, archivos: [] });
-    setEditando(null);
-  };
-  const resetFormClase = () => {
     setFormClase({ titulo: '', descripcion: '', fecha: '', hora: '', duracion: 90, plataforma: 'Zoom', enlace: '' });
-    setEditando(null);
-  };
-  const resetFormMaterial = () => {
     setFormMaterial({ titulo: '', descripcion: '', tipo: 'documento', archivos: [] });
+    setEditando(null);
   };
 
-  // ── Cerrar sesión ──────────────────────────────────────────
   const cerrarSesion = () => {
     localStorage.clear();
     navigate('/login');
@@ -249,534 +180,251 @@ export default function TutorSeminario() {
   // RENDER
   // ═══════════════════════════════════════════════════════════
   return (
-    <div className="ts-layout">
+    <div className="tutor-dashboard">
 
-      {/* ── Sidebar ─────────────────────────────────────────── */}
-      <aside className="ts-sidebar">
-        <div className="ts-sidebar-header">
-          <img src="/assets/images/logofet.png" alt="FET Logo" className="ts-sidebar-logo" />
-          <div className="ts-sidebar-profile">
-            <div className="ts-avatar-icon"><i className="fas fa-user-tie"></i></div>
-            <div>
-              <div className="ts-sidebar-name">{userName}</div>
-              <div className="ts-sidebar-role">Tutor Seminario</div>
-            </div>
-          </div>
+      {/* ─── SIDEBAR (IDÉNTICO PHP) ─────────────────────────── */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <h3>
+            <img src="/IMG/logofet.png" alt="FET" />
+            Tutor Seminario
+          </h3>
         </div>
-
-        <ul className="ts-sidebar-nav">
-          {[
-            { id: 'inicio',       icon: 'fa-home',      label: 'Inicio' },
-            { id: 'actividades',  icon: 'fa-tasks',      label: 'Actividades' },
-            { id: 'clases',       icon: 'fa-video',      label: 'Aula Virtual' },
-            { id: 'materiales',   icon: 'fa-book-open',  label: 'Material de Apoyo' },
-          ].map(({ id, icon, label }) => (
-            <li key={id}>
-              <a
-                href="#"
-                className={seccion === id ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); setSeccion(id); }}
-              >
-                <i className={`fas ${icon}`}></i> {label}
-              </a>
-            </li>
-          ))}
+        <ul>
+          <li><a href="#" className={seccion === 'inicio' ? 'active' : ''} onClick={() => setSeccion('inicio')}><i className="fas fa-home"></i> Inicio</a></li>
+          <li><a href="#" className={seccion === 'actividades' ? 'active' : ''} onClick={() => setSeccion('actividades')}><i className="fas fa-clipboard-list"></i> Actividades</a></li>
+          <li><a href="#" className={seccion === 'clases' ? 'active' : ''} onClick={() => setSeccion('clases')}><i className="fas fa-video"></i> Aula Virtual</a></li>
+          <li><a href="#" className={seccion === 'materiales' ? 'active' : ''} onClick={() => setSeccion('materiales')}><i className="fas fa-book"></i> Material de Apoyo</a></li>
         </ul>
-
-        <div className="ts-logout">
-          <button onClick={cerrarSesion}>
+        <div className="logout-container">
+          <button className="logout-btn" onClick={cerrarSesion}>
             <i className="fas fa-sign-out-alt"></i> Cerrar sesión
           </button>
         </div>
       </aside>
 
-      {/* ── Contenido principal ─────────────────────────────── */}
-      <main className="ts-main">
+      {/* ─── MAIN CONTENT ───────────────────────────────────── */}
+      <main className="main-content">
+        
+        {/* Header Superior */}
+        <header className="header">
+          <h1>Panel de Control</h1>
+          <div className="user-profile">
+            <img src={userAvatar} alt="Avatar" />
+            <span>{userName}</span>
+          </div>
+        </header>
 
-        {/* ─── INICIO ─────────────────────────────────────── */}
+        {/* ── SECCIÓN: INICIO (Clon PHP) ────────────────────── */}
         {seccion === 'inicio' && (
           <>
-            <div className="ts-page-header">
-              <h1 className="ts-page-title">Panel de <span>Control</span></h1>
+            {/* Stats */}
+            <div className="stats-container">
+              <div className="stat-card">
+                <div className="stat-icon students"><i className="fas fa-users"></i></div>
+                <div className="stat-info">
+                  <h3>{stats?.total_estudiantes || 0}</h3>
+                  <p>Estudiantes</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon activities"><i className="fas fa-list-check"></i></div>
+                <div className="stat-info">
+                  <h3>{stats?.total_actividades || 0}</h3>
+                  <p>Actividades</p>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon pending"><i className="fas fa-clock"></i></div>
+                <div className="stat-info">
+                  <h3>{stats?.entregas_pendientes || 0}</h3>
+                  <p>Pendientes de calificar</p>
+                </div>
+              </div>
             </div>
 
-            {loading ? <Spinner /> : (
-              <>
-                {/* Stats */}
-                <div className="ts-stats-grid">
-                  <StatCard icon="fa-users" color="blue" value={stats?.total_estudiantes ?? '—'} label="Estudiantes inscritos" />
-                  <StatCard icon="fa-tasks" color="green" value={stats?.total_actividades ?? '—'} label="Actividades creadas" />
-                  <StatCard icon="fa-clock" color="yellow" value={stats?.entregas_pendientes ?? '—'} label="Entregas por calificar" />
-                </div>
-
-                {/* Próxima clase */}
-                {proximaClase && (
-                  <div className="ts-next-class">
-                    <div className="ts-next-class-icon"><i className="fas fa-video"></i></div>
-                    <div className="ts-next-class-info">
-                      <h3>{proximaClase.titulo}</h3>
-                      <p><i className="fas fa-calendar"></i> {formatFecha(proximaClase.fecha)} — {proximaClase.hora?.slice(0,5)}</p>
-                      <p><i className="fas fa-desktop"></i> {proximaClase.plataforma} · {proximaClase.duracion} min</p>
-                    </div>
-                    <a href={proximaClase.enlace} target="_blank" rel="noreferrer" className="ts-next-class-link">
-                      <i className="fas fa-external-link-alt"></i> Unirse
-                    </a>
-                  </div>
-                )}
-
-                {/* Últimas entregas */}
-                <div className="ts-section">
-                  <div className="ts-section-header">
-                    <span className="ts-section-title"><i className="fas fa-inbox"></i> Últimas Entregas</span>
-                  </div>
-                  <div className="ts-section-body">
-                    {ultimasEntregas.length === 0 ? (
-                      <EmptyState icon="fa-inbox" title="Sin entregas aún" text="Los estudiantes aún no han entregado actividades." />
-                    ) : ultimasEntregas.map((e) => (
-                      <div key={e.id} className="ts-entrega-card pendiente" style={{ marginBottom: 12 }}>
-                        <div className="ts-entrega-header">
-                          <div className="ts-entrega-student">
-                            <i className="fas fa-user-graduate"></i>
-                            {e.estudiante?.name || 'Estudiante'}
-                          </div>
-                          <span className="ts-badge pending"><i className="fas fa-clock"></i> Pendiente</span>
+            {/* Dashboard Layout Row */}
+            <div className="dashboard-row">
+              
+              {/* Columna Izquierda (Clases y Actividades) */}
+              <div className="col-left">
+                
+                {/* Próxima Clase Card */}
+                <div className="card">
+                  <div className="card-header"><i className="fas fa-video"></i> Próxima Clase</div>
+                  <div className="card-body">
+                    {proximaClase ? (
+                      <div className="next-class-content">
+                        <div className="next-class-header">
+                           <span className="next-class-title">{proximaClase.titulo}</span>
+                           <span className="next-class-badge">{proximaClase.plataforma}</span>
                         </div>
-                        <div className="ts-entrega-body">
-                          <small style={{ color: 'var(--gray)' }}>
-                            Actividad: <strong>{e.actividad?.titulo}</strong> — {formatFecha(e.created_at)}
-                          </small>
-                        </div>
+                        <p><i className="fas fa-calendar"></i> {formatFecha(proximaClase.fecha)} — {proximaClase.hora?.slice(0,5)}</p>
+                        <a href={proximaClase.enlace} target="_blank" rel="noreferrer" className="next-class-link">Unirse a la clase</a>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </>
-        )}
-
-        {/* ─── ACTIVIDADES ─────────────────────────────────── */}
-        {seccion === 'actividades' && (
-          <>
-            <div className="ts-page-header">
-              <h1 className="ts-page-title">Gestión de <span>Actividades</span></h1>
-              <button className="ts-btn ts-btn-primary" onClick={() => { resetFormActividad(); setModalActividad(true); }}>
-                <i className="fas fa-plus"></i> Nueva Actividad
-              </button>
-            </div>
-
-            {/* Filtros */}
-            <div className="ts-filter-tabs">
-              {['todas', 'pendientes', 'vencidas', 'calificadas'].map((f) => (
-                <button key={f} className={`ts-filter-tab ${filtro === f ? 'active' : ''}`} onClick={() => setFiltro(f)}>
-                  {f.charAt(0).toUpperCase() + f.slice(1)}
-                </button>
-              ))}
-            </div>
-
-            {loading ? <Spinner /> : actividades.length === 0 ? (
-              <EmptyState icon="fa-tasks" title="Sin actividades" text="Crea tu primera actividad para los estudiantes." />
-            ) : actividades.map((act) => (
-              <div key={act.id} className="ts-activity-card">
-                <div className="ts-activity-card-header">
-                  <div className="ts-activity-tipo">
-                    <i className={`fas ${iconoTipo(act.tipo)}`}></i>
-                    {act.tipo}
-                  </div>
-                  <div className="ts-activity-date">
-                    <i className="fas fa-calendar"></i> Límite: {formatFecha(act.fecha_limite)}
-                  </div>
-                </div>
-                <div className="ts-activity-card-body">
-                  <div className="ts-activity-title">{act.titulo}</div>
-                  <div className="ts-activity-desc">{act.descripcion || 'Sin descripción.'}</div>
-                  <div className="ts-activity-meta">
-                    <span><i className="fas fa-star"></i> Puntaje: {act.puntaje}</span>
-                    <span><i className="fas fa-inbox"></i> {act.total_entregas} entregas</span>
-                    {act.entregas_pendientes > 0 && (
-                      <span className="ts-badge pending"><i className="fas fa-clock"></i> {act.entregas_pendientes} por calificar</span>
-                    )}
-                    {act.entregas_calificadas > 0 && (
-                      <span className="ts-badge graded"><i className="fas fa-check"></i> {act.entregas_calificadas} calificadas</span>
+                    ) : (
+                      <div className="no-data">
+                        <h5>No hay clases programadas</h5>
+                        <p>No tienes clases programadas próximamente.</p>
+                        <button className="btn-program" onClick={() => setModalClase(true)}>+ Programar una clase</button>
+                      </div>
                     )}
                   </div>
                 </div>
-                <div className="ts-activity-card-footer">
-                  <button className="ts-btn ts-btn-info ts-btn-sm" onClick={() => abrirEntregas(act)}>
-                    <i className="fas fa-graduation-cap"></i> Calificar Entregas
-                  </button>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="ts-btn ts-btn-secondary ts-btn-sm" onClick={() => {
-                      setFormActividad({ ...act, archivos: [] });
-                      setEditando(act.id);
-                      setModalActividad(true);
-                    }}>
-                      <i className="fas fa-edit"></i> Editar
-                    </button>
-                    <button className="ts-btn ts-btn-danger ts-btn-sm" onClick={() => eliminarActividad(act.id)}>
-                      <i className="fas fa-trash"></i>
-                    </button>
+
+                {/* Próximas Actividades Card */}
+                <div className="card">
+                  <div className="card-header"><i className="fas fa-calendar-alt"></i> Próximas Actividades</div>
+                  <div className="card-body">
+                    {actividades.length > 0 ? (
+                      actividades.slice(0, 3).map(act => (
+                        <div key={act.id} className="list-item">
+                          <div className="item-icon"><i className={`fas ${iconoTipo(act.tipo)}`}></i></div>
+                          <div className="item-info">
+                            <div className="item-title">{act.titulo}</div>
+                            <div className="item-meta">Límite: {formatFecha(act.fecha_limite)}</div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="no-data"><p>No hay actividades próximas.</p></div>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Columna Derecha (Acciones Rápidas) */}
+              <div className="col-right">
+                <div className="actions-card">
+                  <div className="actions-header"><i className="fas fa-bolt"></i> Acciones Rápidas</div>
+                  <div className="actions-body">
+                    <button className="btn-action" onClick={() => { resetForms(); setModalActividad(true); }}><i className="fas fa-plus"></i> Nueva Actividad</button>
+                    <button className="btn-action" onClick={() => { resetForms(); setModalClase(true); }}><i className="fas fa-video"></i> Programar Clase</button>
+                    <button className="btn-action" onClick={() => { resetForms(); setModalMaterial(true); }}><i className="fas fa-book"></i> Compartir Material</button>
                   </div>
                 </div>
               </div>
-            ))}
-          </>
-        )}
 
-        {/* ─── AULA VIRTUAL ────────────────────────────────── */}
-        {seccion === 'clases' && (
-          <>
-            <div className="ts-page-header">
-              <h1 className="ts-page-title">Aula <span>Virtual</span></h1>
-              <button className="ts-btn ts-btn-primary" onClick={() => { resetFormClase(); setModalClase(true); }}>
-                <i className="fas fa-plus"></i> Nueva Clase
-              </button>
             </div>
-
-            {loading ? <Spinner /> : clases.length === 0 ? (
-              <EmptyState icon="fa-video" title="Sin clases programadas" text="Programa tu primera sesión virtual para los estudiantes." />
-            ) : (
-              <div className="ts-section">
-                <div className="ts-section-body">
-                  {clases.map((c) => (
-                    <div key={c.id} className="ts-activity-card">
-                      <div className="ts-activity-card-header">
-                        <div className="ts-activity-tipo"><i className="fas fa-video"></i> {c.plataforma}</div>
-                        <div className="ts-activity-date"><i className="fas fa-calendar"></i> {formatFecha(c.fecha)} — {c.hora?.slice(0,5)}</div>
-                      </div>
-                      <div className="ts-activity-card-body">
-                        <div className="ts-activity-title">{c.titulo}</div>
-                        <div className="ts-activity-desc">{c.descripcion || 'Sin descripción.'}</div>
-                        <div className="ts-activity-meta">
-                          <span><i className="fas fa-clock"></i> {c.duracion} minutos</span>
-                          <a href={c.enlace} target="_blank" rel="noreferrer" style={{ color: 'var(--info)', fontWeight: 600 }}>
-                            <i className="fas fa-link"></i> Enlace de acceso
-                          </a>
-                        </div>
-                      </div>
-                      <div className="ts-activity-card-footer">
-                        <div style={{ display: 'flex', gap: 8 }}>
-                          <button className="ts-btn ts-btn-secondary ts-btn-sm" onClick={() => { setFormClase(c); setEditando(c.id); setModalClase(true); }}>
-                            <i className="fas fa-edit"></i> Editar
-                          </button>
-                          <button className="ts-btn ts-btn-danger ts-btn-sm" onClick={() => eliminarClase(c.id)}>
-                            <i className="fas fa-trash"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </>
         )}
 
-        {/* ─── MATERIAL DE APOYO ───────────────────────────── */}
-        {seccion === 'materiales' && (
-          <>
-            <div className="ts-page-header">
-              <h1 className="ts-page-title">Material de <span>Apoyo</span></h1>
-              <button className="ts-btn ts-btn-primary" onClick={() => setModalMaterial(true)}>
-                <i className="fas fa-plus"></i> Nuevo Material
-              </button>
+        {/* ── OTRAS SECCIONES (Listados) ───────────────────── */}
+        {seccion !== 'inicio' && (
+          <div className="card">
+            <div className="card-header">
+              <i className={`fas ${seccion === 'actividades' ? 'fa-clipboard-list' : seccion === 'clases' ? 'fa-video' : 'fa-book'}`}></i>
+              {seccion === 'actividades' ? 'Gestión de Actividades' : seccion === 'clases' ? 'Aula Virtual' : 'Material de Apoyo'}
             </div>
-
-            {loading ? <Spinner /> : materiales.length === 0 ? (
-              <EmptyState icon="fa-book-open" title="Sin materiales" text="Sube documentos, videos o guías para tus estudiantes." />
-            ) : (
-              <div className="ts-section">
-                <div className="ts-section-body">
-                  {materiales.map((m) => (
-                    <div key={m.id} className="ts-activity-card">
-                      <div className="ts-activity-card-header">
-                        <div className="ts-activity-tipo">
-                          <i className={`fas ${m.tipo === 'video' ? 'fa-play-circle' : 'fa-file-alt'}`}></i>
-                          {m.tipo}
+            <div className="card-body">
+              {loading ? <p>Cargando...</p> : (
+                <div className="list-container">
+                   {seccion === 'actividades' && actividades.map(act => (
+                      <div key={act.id} className="list-item">
+                        <div className="item-icon"><i className={`fas ${iconoTipo(act.tipo)}`}></i></div>
+                        <div className="item-info">
+                          <div className="item-title">{act.titulo}</div>
+                          <div className="item-meta">{act.tipo.toUpperCase()} — Límite: {formatFecha(act.fecha_limite)}</div>
                         </div>
-                        <div className="ts-activity-date"><i className="fas fa-calendar"></i> {formatFecha(m.created_at)}</div>
                       </div>
-                      <div className="ts-activity-card-body">
-                        <div className="ts-activity-title">{m.titulo}</div>
-                        <div className="ts-activity-desc">{m.descripcion || 'Sin descripción.'}</div>
-                        {m.archivos?.length > 0 && (
-                          <div className="ts-activity-meta">
-                            {m.archivos.map((a) => (
-                              <a key={a.id} href={`http://localhost:8000/storage/${a.ruta_archivo}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.85rem' }}>
-                                <i className="fas fa-paperclip"></i> {a.nombre_archivo}
-                              </a>
-                            ))}
-                          </div>
-                        )}
+                   ))}
+                   {seccion === 'clases' && clases.map(cl => (
+                      <div key={cl.id} className="list-item">
+                        <div className="item-icon"><i className="fas fa-video"></i></div>
+                        <div className="item-info">
+                          <div className="item-title">{cl.titulo}</div>
+                          <div className="item-meta">{cl.plataforma} — {formatFecha(cl.fecha)}</div>
+                        </div>
+                        <a href={cl.enlace} target="_blank" rel="noreferrer" className="btn-action" style={{ padding: '5px 15px', fontSize: '0.8rem' }}>Unirse</a>
                       </div>
-                      <div className="ts-activity-card-footer">
-                        <button className="ts-btn ts-btn-danger ts-btn-sm" onClick={() => eliminarMaterial(m.id)}>
-                          <i className="fas fa-trash"></i> Eliminar
-                        </button>
+                   ))}
+                   {seccion === 'materiales' && materiales.map(mat => (
+                      <div key={mat.id} className="list-item">
+                        <div className="item-icon"><i className="fas fa-book"></i></div>
+                        <div className="item-info">
+                          <div className="item-title">{mat.titulo}</div>
+                          <div className="item-meta">{mat.tipo.toUpperCase()}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                   ))}
+                   {(seccion === 'actividades' && actividades.length === 0) || 
+                    (seccion === 'clases' && clases.length === 0) || 
+                    (seccion === 'materiales' && materiales.length === 0) ? (
+                      <p className="no-data">No se encontraron registros.</p>
+                   ) : null}
                 </div>
-              </div>
-            )}
-          </>
+              )}
+            </div>
+          </div>
         )}
+
       </main>
 
-      {/* ═══ MODAL: Nueva/Editar Actividad ════════════════════ */}
+      {/* ─── MODALES ────────────────────────────────────────── */}
       {modalActividad && (
-        <div className="ts-modal-overlay" onClick={() => setModalActividad(false)}>
-          <div className="ts-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ts-modal-header">
-              <h2><i className="fas fa-tasks"></i> {editando ? 'Editar' : 'Nueva'} Actividad</h2>
-              <button className="ts-modal-close" onClick={() => setModalActividad(false)}>×</button>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2><i className="fas fa-tasks"></i> Nueva Actividad</h2>
+              <button className="modal-close" onClick={() => setModalActividad(false)}>&times;</button>
             </div>
             <form onSubmit={submitActividad}>
-              <div className="ts-modal-body">
-                <div className="ts-form-grid">
-                  <div className="ts-form-field full">
-                    <label>Título *</label>
-                    <input required value={formActividad.titulo} onChange={(e) => setFormActividad({ ...formActividad, titulo: e.target.value })} placeholder="Ej: Diseño de Base de Datos" />
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Título</label>
+                  <input required value={formActividad.titulo} onChange={e => setFormActividad({...formActividad, titulo: e.target.value})} />
+                </div>
+                <div className="form-group">
+                  <label>Descripción</label>
+                  <textarea rows="3" value={formActividad.descripcion} onChange={e => setFormActividad({...formActividad, descripcion: e.target.value})}></textarea>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div className="form-group">
+                    <label>Fecha Límite</label>
+                    <input type="date" required value={formActividad.fecha_limite} onChange={e => setFormActividad({...formActividad, fecha_limite: e.target.value})} />
                   </div>
-                  <div className="ts-form-field full">
-                    <label>Descripción</label>
-                    <textarea rows={3} value={formActividad.descripcion} onChange={(e) => setFormActividad({ ...formActividad, descripcion: e.target.value })} placeholder="Instrucciones detalladas..." />
-                  </div>
-                  <div className="ts-form-field">
-                    <label>Tipo *</label>
-                    <select value={formActividad.tipo} onChange={(e) => setFormActividad({ ...formActividad, tipo: e.target.value })}>
-                      <option value="tarea">Tarea</option>
-                      <option value="proyecto">Proyecto</option>
-                      <option value="examen">Examen</option>
-                      <option value="cuestionario">Cuestionario</option>
-                      <option value="investigacion">Investigación</option>
-                    </select>
-                  </div>
-                  <div className="ts-form-field">
-                    <label>Puntaje máximo (0–5) *</label>
-                    <input type="number" min="0" max="5" step="0.5" value={formActividad.puntaje} onChange={(e) => setFormActividad({ ...formActividad, puntaje: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field">
-                    <label>Fecha límite *</label>
-                    <input type="date" required value={formActividad.fecha_limite} onChange={(e) => setFormActividad({ ...formActividad, fecha_limite: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field">
-                    <label>Hora límite *</label>
-                    <input type="time" required value={formActividad.hora_limite} onChange={(e) => setFormActividad({ ...formActividad, hora_limite: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field full" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <input type="checkbox" id="entregas_tarde" checked={formActividad.permitir_entregas_tarde} onChange={(e) => setFormActividad({ ...formActividad, permitir_entregas_tarde: e.target.checked })} style={{ width: 'auto' }} />
-                    <label htmlFor="entregas_tarde" style={{ marginBottom: 0 }}>Permitir entregas tardías</label>
-                  </div>
-                  <div className="ts-form-field full">
-                    <label>Archivos adjuntos (enunciado)</label>
-                    <input type="file" multiple onChange={(e) => setFormActividad({ ...formActividad, archivos: Array.from(e.target.files) })} />
+                  <div className="form-group">
+                    <label>Hora Límite</label>
+                    <input type="time" required value={formActividad.hora_limite} onChange={e => setFormActividad({...formActividad, hora_limite: e.target.value})} />
                   </div>
                 </div>
               </div>
-              <div className="ts-modal-footer">
-                <button type="button" className="ts-btn ts-btn-secondary" onClick={() => setModalActividad(false)}>Cancelar</button>
-                <button type="submit" className="ts-btn ts-btn-primary"><i className="fas fa-save"></i> Guardar</button>
+              <div className="modal-footer">
+                <button type="button" className="btn-cancel" onClick={() => setModalActividad(false)}>Cancelar</button>
+                <button type="submit" className="btn-save">Guardar Actividad</button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* ═══ MODAL: Calificar Entregas ════════════════════════ */}
-      {entregasModal !== null && (
-        <div className="ts-modal-overlay" onClick={() => setEntregasModal(null)}>
-          <div className="ts-modal" style={{ maxWidth: 760 }} onClick={(e) => e.stopPropagation()}>
-            <div className="ts-modal-header">
-              <h2><i className="fas fa-graduation-cap"></i> Entregas — {actividadModal?.titulo}</h2>
-              <button className="ts-modal-close" onClick={() => setEntregasModal(null)}>×</button>
-            </div>
-            <div className="ts-modal-body">
-              {entregasModal.length === 0 ? (
-                <EmptyState icon="fa-inbox" title="Sin entregas" text="Ningún estudiante ha entregado esta actividad aún." />
-              ) : entregasModal.map((e) => (
-                <div key={e.id} className={`ts-entrega-card ${e.estado}`}>
-                  <div className="ts-entrega-header">
-                    <div className="ts-entrega-student">
-                      <i className="fas fa-user-graduate"></i>
-                      {e.estudiante?.name || 'Estudiante'}
-                      <small style={{ color: 'var(--gray)', fontWeight: 400 }}>— {e.estudiante?.email}</small>
-                    </div>
-                    <span className={`ts-badge ${e.estado === 'calificado' ? 'graded' : 'pending'}`}>
-                      {e.estado === 'calificado' ? `✓ ${e.calificacion}/5` : 'Pendiente'}
-                    </span>
-                  </div>
-                  <div className="ts-entrega-body">
-                    {e.comentario && <p style={{ marginBottom: 8, fontSize: '0.9rem' }}><strong>Comentario:</strong> {e.comentario}</p>}
-                    {e.archivos?.length > 0 && (
-                      <div style={{ marginBottom: 8 }}>
-                        {e.archivos.map((a) => (
-                          <a key={a.id} href={`http://localhost:8000/storage/${a.ruta_archivo}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--info)', marginRight: 10 }}>
-                            <i className="fas fa-download"></i> {a.nombre_archivo}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                    {e.estado !== 'calificado' && (
-                      <div className="ts-calificacion-form">
-                        <input
-                          type="number" min="0" max="5" step="0.1"
-                          placeholder="Nota (0–5)"
-                          value={calificaciones[e.id]?.nota || ''}
-                          onChange={(ev) => setCalificaciones({ ...calificaciones, [e.id]: { ...calificaciones[e.id], nota: ev.target.value } })}
-                        />
-                        <input
-                          type="text" placeholder="Retroalimentación..."
-                          style={{ flex: 1, padding: '8px 12px', border: '2px solid var(--gray-border)', borderRadius: 'var(--radius)' }}
-                          value={calificaciones[e.id]?.comentario || ''}
-                          onChange={(ev) => setCalificaciones({ ...calificaciones, [e.id]: { ...calificaciones[e.id], comentario: ev.target.value } })}
-                        />
-                        <button className="ts-btn ts-btn-primary ts-btn-sm" onClick={() => calificarEntrega(e.id)}>
-                          <i className="fas fa-check"></i> Calificar
-                        </button>
-                      </div>
-                    )}
-                    {e.estado === 'calificado' && e.comentario_tutor && (
-                      <p style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: 8 }}>
-                        <i className="fas fa-comment"></i> Retroalimentación: {e.comentario_tutor}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══ MODAL: Nueva Clase Virtual ═══════════════════════ */}
+      {/* Otros modales (Clase, Material) se simplificarán por ahora para cumplir el diseño principal */}
       {modalClase && (
-        <div className="ts-modal-overlay" onClick={() => setModalClase(false)}>
-          <div className="ts-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ts-modal-header">
-              <h2><i className="fas fa-video"></i> {editando ? 'Editar' : 'Nueva'} Clase Virtual</h2>
-              <button className="ts-modal-close" onClick={() => setModalClase(false)}>×</button>
-            </div>
-            <form onSubmit={submitClase}>
-              <div className="ts-modal-body">
-                <div className="ts-form-grid">
-                  <div className="ts-form-field full">
-                    <label>Título *</label>
-                    <input required value={formClase.titulo} onChange={(e) => setFormClase({ ...formClase, titulo: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field full">
-                    <label>Descripción</label>
-                    <textarea rows={2} value={formClase.descripcion} onChange={(e) => setFormClase({ ...formClase, descripcion: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field">
-                    <label>Fecha *</label>
-                    <input type="date" required value={formClase.fecha} onChange={(e) => setFormClase({ ...formClase, fecha: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field">
-                    <label>Hora *</label>
-                    <input type="time" required value={formClase.hora} onChange={(e) => setFormClase({ ...formClase, hora: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field">
-                    <label>Duración (minutos) *</label>
-                    <input type="number" min="15" value={formClase.duracion} onChange={(e) => setFormClase({ ...formClase, duracion: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field">
-                    <label>Plataforma *</label>
-                    <select value={formClase.plataforma} onChange={(e) => setFormClase({ ...formClase, plataforma: e.target.value })}>
-                      {['Zoom', 'Google Meet', 'Microsoft Teams', 'Otra'].map((p) => <option key={p}>{p}</option>)}
-                    </select>
-                  </div>
-                  <div className="ts-form-field full">
-                    <label>Enlace de acceso *</label>
-                    <input type="url" required value={formClase.enlace} onChange={(e) => setFormClase({ ...formClase, enlace: e.target.value })} placeholder="https://..." />
-                  </div>
-                </div>
-              </div>
-              <div className="ts-modal-footer">
-                <button type="button" className="ts-btn ts-btn-secondary" onClick={() => setModalClase(false)}>Cancelar</button>
-                <button type="submit" className="ts-btn ts-btn-primary"><i className="fas fa-save"></i> Guardar</button>
-              </div>
-            </form>
-          </div>
+        <div className="modal-overlay">
+           <div className="modal-content">
+             <div className="modal-header">
+               <h2><i className="fas fa-video"></i> Nueva Clase Virtual</h2>
+               <button className="modal-close" onClick={() => setModalClase(false)}>&times;</button>
+             </div>
+             <form onSubmit={submitClase}>
+               <div className="modal-body">
+                 <div className="form-group"><label>Título</label><input required value={formClase.titulo} onChange={e => setFormClase({...formClase, titulo: e.target.value})} /></div>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                   <div className="form-group"><label>Fecha</label><input type="date" required value={formClase.fecha} onChange={e => setFormClase({...formClase, fecha: e.target.value})} /></div>
+                   <div className="form-group"><label>Hora</label><input type="time" required value={formClase.hora} onChange={e => setFormClase({...formClase, hora: e.target.value})} /></div>
+                 </div>
+                 <div className="form-group"><label>Enlace de la Clase</label><input type="url" required value={formClase.enlace} onChange={e => setFormClase({...formClase, enlace: e.target.value})} /></div>
+               </div>
+               <div className="modal-footer">
+                 <button type="button" className="btn-cancel" onClick={() => setModalClase(false)}>Cancelar</button>
+                 <button type="submit" className="btn-save">Programar Clase</button>
+               </div>
+             </form>
+           </div>
         </div>
       )}
 
-      {/* ═══ MODAL: Nuevo Material ════════════════════════════ */}
-      {modalMaterial && (
-        <div className="ts-modal-overlay" onClick={() => setModalMaterial(false)}>
-          <div className="ts-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ts-modal-header">
-              <h2><i className="fas fa-book-open"></i> Nuevo Material de Apoyo</h2>
-              <button className="ts-modal-close" onClick={() => setModalMaterial(false)}>×</button>
-            </div>
-            <form onSubmit={submitMaterial}>
-              <div className="ts-modal-body">
-                <div className="ts-form-grid">
-                  <div className="ts-form-field full">
-                    <label>Título *</label>
-                    <input required value={formMaterial.titulo} onChange={(e) => setFormMaterial({ ...formMaterial, titulo: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field full">
-                    <label>Descripción</label>
-                    <textarea rows={2} value={formMaterial.descripcion} onChange={(e) => setFormMaterial({ ...formMaterial, descripcion: e.target.value })} />
-                  </div>
-                  <div className="ts-form-field">
-                    <label>Tipo *</label>
-                    <select value={formMaterial.tipo} onChange={(e) => setFormMaterial({ ...formMaterial, tipo: e.target.value })}>
-                      <option value="documento">Documento</option>
-                      <option value="video">Video</option>
-                      <option value="otro">Otro</option>
-                    </select>
-                  </div>
-                  <div className="ts-form-field full">
-                    <label>Archivos *</label>
-                    <input type="file" multiple onChange={(e) => setFormMaterial({ ...formMaterial, archivos: Array.from(e.target.files) })} />
-                  </div>
-                </div>
-              </div>
-              <div className="ts-modal-footer">
-                <button type="button" className="ts-btn ts-btn-secondary" onClick={() => setModalMaterial(false)}>Cancelar</button>
-                <button type="submit" className="ts-btn ts-btn-primary"><i className="fas fa-cloud-upload-alt"></i> Subir</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// Sub-componentes reutilizables
-// ─────────────────────────────────────────────────────────────
-
-function StatCard({ icon, color, value, label }) {
-  return (
-    <div className="ts-stat-card">
-      <div className={`ts-stat-icon ${color}`}><i className={`fas ${icon}`}></i></div>
-      <div>
-        <div className="ts-stat-value">{value}</div>
-        <div className="ts-stat-label">{label}</div>
-      </div>
-    </div>
-  );
-}
-
-function Spinner() {
-  return (
-    <div className="ts-loading">
-      <div className="ts-spinner"></div>
-      <span>Cargando...</span>
-    </div>
-  );
-}
-
-function EmptyState({ icon, title, text }) {
-  return (
-    <div className="ts-empty-state">
-      <i className={`fas ${icon}`}></i>
-      <h3>{title}</h3>
-      <p>{text}</p>
     </div>
   );
 }
