@@ -711,50 +711,108 @@ input[type="file"] {
     margin-bottom: 24px;
 }
 
+
 .estudiantes-lista {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     margin-top: 24px;
 }
 
 .estudiante-item {
     background: var(--color-white);
-    border: 2px solid var(--color-gray-light);
+    border: 1px solid var(--color-gray-light);
     border-radius: var(--border-radius);
-    padding: 16px;
-    position: relative;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     box-shadow: var(--shadow-soft);
-    transition: transform var(--transition-speed);
+    transition: all var(--transition-speed);
 }
+
+.estudiante-item:hover {
+    transform: translateX(5px);
+    border-color: var(--color-primary-light);
+}
+
+.estudiante-info {
+    flex: 1;
+    min-width: 0; 
+    margin-bottom: 0;
+}
+
+.estudiante-info strong {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Pone "..." si el nombre es muy largo */
+    color: var(--color-primary-dark);
+}
+
 
 .estudiante-item:hover {
     transform: translateY(-5px);
     box-shadow: var(--shadow-medium);
 }
 
-.estudiante-item .btn-eliminar {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: linear-gradient(90deg, #DC2626, #B91C1C);
-    color: var(--color-white);
+
+
+
+
+/* BOTÓN ELIMINAR (Círculo Rojo Estético) */
+/* Nota: En tu JSX asegúrate que el botón de la papelera use className="btn-eliminar-circular" */
+.btn-eliminar-circular {
+    background: #DC2626;
+    color: white;
     border: none;
-    border-radius: var(--border-radius);
-    padding: 6px 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
-    font-size: 0.85rem;
-    font-family: var(--font-primary);
-    transition: all var(--transition-speed);
+    flex-shrink: 0;
+    margin-left: 15px;
+    transition: all 0.3s ease;
 }
+
+.btn-eliminar-circular:hover {
+    background: #B91C1C;
+    transform: scale(1.1) rotate(10deg);
+}
+
+/* --- MODAL: ESTUDIANTES DISPONIBLES --- */
+
+.estudiante-disponible {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--color-gray-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
 
 .estudiante-item .btn-eliminar:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-soft);
 }
 
-.estudiante-info {
-    margin-bottom: 16px;
+
+/* BOTÓN INSCRIBIR (Forma fija, no se deforma) */
+.estudiante-disponible button {
+    background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
+    color: var(--color-white);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    min-width: 110px; /* Ancho fijo */
+    font-weight: 600;
+    flex-shrink: 0; /* Evita que el nombre largo lo aplaste */
+    cursor: pointer;
+    transition: all var(--transition-speed);
 }
 
 .estudiante-acciones {
@@ -811,16 +869,9 @@ input[type="file"] {
     border-bottom: none;
 }
 
-.estudiante-disponible button {
-    background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
-    color: var(--color-white);
-    border: none;
-    border-radius: var(--border-radius);
-    padding: 8px 16px;
-    cursor: pointer;
-    font-family: var(--font-primary);
-    transition: all var(--transition-speed);
-}
+
+
+
 
 .estudiante-disponible button:hover {
     background: linear-gradient(90deg, var(--color-primary), var(--color-primary-dark));

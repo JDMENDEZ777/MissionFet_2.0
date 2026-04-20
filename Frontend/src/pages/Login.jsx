@@ -14,7 +14,6 @@ export default function Login() {
     try {
       const response = await api.post('/login', formData);
       localStorage.setItem('token', response.data.access_token);
-      alert('¡Bienvenido ' + response.data.user.name + '!');
       navigate('/dashboard'); 
     } catch (error) {
       console.error('Error:', error.response);

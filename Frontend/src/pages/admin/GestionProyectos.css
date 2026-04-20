@@ -401,35 +401,12 @@ textarea:focus {
 }
 
 /* Contenedores de tarjetas */
-.estudiantes-container,
-.tutores-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
-    max-height: 400px;
-    overflow-y: auto;
-    padding: 16px;
-    margin-bottom: 24px;
-    border: 2px solid var(--color-gray-light);
-    border-radius: var(--border-radius);
-    background: var(--color-white);
-}
 
-.estudiante-card,
-.tutor-card {
-    display: flex;
-    background: var(--color-white);
-    border-radius: var(--border-radius);
-    padding: 16px;
-    box-shadow: var(--shadow-soft);
-    transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-}
 
-.estudiante-card:hover,
-.tutor-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-medium);
-}
+
+
+
+
 
 .estudiante-info,
 .tutor-info {
@@ -465,24 +442,10 @@ textarea:focus {
 }
 
 /* Estudiantes seleccionados */
-.estudiantes-seleccionados {
-    background: var(--color-gray-light);
-    padding: 16px;
-    border-radius: var(--border-radius);
-    margin-top: 24px;
-    box-shadow: var(--shadow-soft);
-}
 
-.estudiantes-seleccionados h3 {
-    margin-bottom: 12px;
-    font-size: 1.4rem;
-    color: var(--color-gray-dark);
-    font-family: var(--font-heading);
-}
 
-.estudiantes-seleccionados ul {
-    list-style-position: inside;
-}
+
+
 
 /* Estudiantes actuales */
 .estudiantes-actuales {
@@ -514,11 +477,10 @@ textarea:focus {
 }
 
 /* Proyectos Grid */
-.proyectos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
-}
+
+
+
+
 
 .proyecto-card {
     display: flex;
@@ -976,6 +938,155 @@ footer.nav-active {
     width: calc(100% - 300px);
 }
 
+/* ============================================================
+   GESTIÓN DE PROYECTOS v2.0 - OPTIMIZACIÓN
+   ============================================================ */
+
+/* Contenedor de selección de estudiantes */
+.estudiantes-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 2px solid var(--color-gray-light);
+    border-radius: var(--border-radius);
+    background-color: #fcfcfc;
+}
+
+/* Tarjeta de cada estudiante disponible */
+.estudiante-card {
+    background: var(--color-white);
+    border: 1px solid var(--color-gray-light);
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-soft);
+}
+
+.estudiante-card:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-3px);
+}
+
+.estudiante-card.selected {
+    border: 2px solid var(--color-primary);
+    background-color: rgba(3, 151, 8, 0.05);
+}
+
+.estudiante-info h3 {
+    font-size: 1rem;
+    color: var(--color-primary-dark);
+    margin-bottom: 5px;
+}
+
+.estudiante-info p {
+    font-size: 0.85rem;
+    color: var(--color-gray);
+    margin: 2px 0;
+}
+
+/* Checkbox personalizado */
+.estudiante-select input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+/* Panel lateral de estudiantes seleccionados */
+.estudiantes-seleccionados {
+    background: var(--color-white);
+    color: var(--color-gray-dark);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    margin-top: 25px;
+    box-shadow: var(--shadow-medium);
+}
+
+.estudiantes-seleccionados h3 {
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--color-gray);
+    padding-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.estudiantes-seleccionados ul {
+    list-style: none;
+}
+
+.estudiantes-seleccionados li {
+    padding: 8px 0;
+    border-bottom: 3px dashed rgba(33, 11, 133, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.estudiantes-seleccionados li:last-child {
+    border-bottom: none;
+}
+
+/* Estilo para el Líder del proyecto */
+.lider-badge {
+    background: var(--color-accent); /* Tu color Oro */
+    color: var(--color-black);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+/* Cuadrícula de proyectos en "Listar" */
+.proyectos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.proyecto-card {
+    background: var(--color-white);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--color-gray-light);
+}
+
+.proyecto-header {
+    padding: 15px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.proyecto-header.estado-propuesto { background: #64748b; }
+.proyecto-header.estado-aprobado { background: var(--color-primary); }
+.proyecto-header.estado-finalizado { background: var(--color-gray-dark); }
+
+.proyecto-body {
+    padding: 20px;
+}
+
+.proyecto-footer {
+    padding: 15px;
+    background: #f8fafc;
+    border-top: 1px solid #edf2f7;
+    display: flex;
+    gap: 10px;
+}
+
+
+
+
 /* Responsive */
 @media (max-width: 768px) {
     #logo {
@@ -1049,3 +1160,5 @@ footer.nav-active {
         min-width: 280px;
     }
 }
+
+

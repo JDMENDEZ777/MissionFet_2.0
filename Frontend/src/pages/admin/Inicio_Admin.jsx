@@ -245,7 +245,7 @@ export default function InicioAdmin() {
         </section>
       </main>
       
-      <footer className={navActive ? 'nav-active' : ''}></footer>
+      
     </div>
   );
 }

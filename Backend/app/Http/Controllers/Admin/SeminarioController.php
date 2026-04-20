@@ -101,20 +101,26 @@ class SeminarioController extends Controller
         ]);
     }
 
-    // 5. OBTENER ESTUDIANTES DISPONIBLES PARA MATRICULAR
+    // 5. OBTENER ESTUDIANTES DISPONIBLES PARA MATRICULAR (FILTRO ESTRICTO)
     public function getEstudiantesDisponibles($id)
     {
-        // Buscamos quiénes ya están inscritos para no mostrarlos
+        // 1. Buscamos quiénes ya están inscritos para no repetirlos
         $inscritos = DB::table('inscripciones_seminario')
             ->where('seminario_id', $id)
-            ->pluck('estudiante_id');
+            ->pluck('estudiante_id')
+            ->toArray();
 
-        // Traemos a los estudiantes (rol = estudiante) que NO estén en la lista de inscritos
-        $disponibles = DB::table('users')
-            ->where('rol', 'estudiante')
-            ->whereNotIn('id', $inscritos)
-            ->select('id', 'name as nombre', 'documento', 'codigo_estudiante')
-            ->get();
+        // 2. FILTRO: Rol 'estudiante' Y que su opcion_grado sea 'seminario'
+        $query = DB::table('users')
+            ->whereRaw('LOWER(rol) = ?', ['estudiante'])
+            ->whereRaw('LOWER(opcion_grado) = ?', ['seminario']); // <-- Esto soluciona tu problema de filtrado
+
+        if (count($inscritos) > 0) {
+            $query->whereNotIn('id', $inscritos);
+        }
+
+        // Devolvemos el name como nombre
+        $disponibles = $query->select('id', 'name as nombre', 'documento', 'codigo_estudiante')->get();
 
         return response()->json($disponibles);
     }

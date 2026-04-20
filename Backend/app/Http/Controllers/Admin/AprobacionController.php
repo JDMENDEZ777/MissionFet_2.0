@@ -3,85 +3,108 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\SolicitudRegistro;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-// ELIMINAMOS EL IMPORT DE TWILIO POR AHORA
 
 class AprobacionController extends Controller
 {
+    // 1. Obtener Solicitudes Pendientes
     public function index()
     {
         try {
-            return response()->json([
-                'solicitudes' => SolicitudRegistro::all(),
-                'historial' => DB::table('historial_solicitudes')->get()
-            ]);
+            $solicitudes = DB::table('solicitudes_registro')
+                ->where('estado', 'pendiente')
+                ->orderBy('created_at', 'desc')
+                ->get();
+            return response()->json($solicitudes);
         } catch (\Exception $e) {
-            // Si algo falla, le decimos exactamente qué fue a React
-            return response()->json(['message' => 'Error de BD: ' . $e->getMessage()], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
+    // 2. Obtener el Historial de Aprobados/Rechazados
+    public function getHistorial()
+    {
+        try {
+            $historial = DB::table('historial_solicitudes')
+                ->orderBy('created_at', 'desc')
+                ->get();
+            return response()->json($historial);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    // 3. Aprobar Usuario (Mueve el dato a Users y a Historial)
     public function aprobar($id)
     {
-        return DB::transaction(function () use ($id) {
-            $solicitud = SolicitudRegistro::findOrFail($id);
+        $solicitud = DB::table('solicitudes_registro')->where('id', $id)->first();
+        if (!$solicitud) return response()->json(['message' => 'Solicitud no encontrada'], 404);
 
-            // Crear el usuario real
-            $user = User::create([
-                'name' => $solicitud->nombre,
-                'email' => $solicitud->email,
-                'password' => $solicitud->password,
-                'rol' => $solicitud->rol,
-                'documento' => $solicitud->documento,
-            ]);
+        $existe = DB::table('users')->where('email', $solicitud->email)->exists();
 
-            // Guardar en historial
+        DB::beginTransaction();
+        try {
+            if (!$existe) {
+                DB::table('users')->insert([
+                    'name'              => $solicitud->nombre,
+                    'email'             => $solicitud->email,
+                    'password'          => $solicitud->password,
+                    'rol'               => $solicitud->rol,
+                    'documento'         => $solicitud->documento,
+                    'codigo_estudiante' => $solicitud->codigo_estudiante,
+                    'telefono'          => $solicitud->telefono,
+                    'opcion_grado'      => $solicitud->opcion_grado,
+                    'ciclo'             => $solicitud->ciclo,
+                    'estado'            => 'activo',
+                    'created_at'        => now(),
+                    'updated_at'        => now()
+                ]);
+            }
+
+            // Insertamos en el historial para que la pestaña no salga vacía
             DB::table('historial_solicitudes')->insert([
                 'solicitud_id' => $id,
-                'nombre' => $solicitud->nombre,
-                'email' => $solicitud->email,
-                'documento' => $solicitud->documento,
-                'rol' => $solicitud->rol,
+                'nombre'       => $solicitud->nombre,
+                'email'        => $solicitud->email,
+                'documento'    => $solicitud->documento,
+                'rol'          => $solicitud->rol,
                 'estado_final' => 'aprobado',
-                'created_at' => now(),
+                'created_at'   => now()
             ]);
 
-            // Llamamos a la función, pero está inofensiva por ahora
-            $this->enviarNotificacionWhatsapp($solicitud);
+            // Borramos de pendientes para que no se duplique
+            DB::table('solicitudes_registro')->where('id', $id)->delete();
 
-            $solicitud->delete();
-
-            return response()->json(['message' => 'Usuario aprobado y cuenta creada']);
-        });
+            DB::commit();
+            return response()->json(['message' => 'Usuario aprobado y registrado en historial']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 
+    // 4. Rechazar Usuario
     public function rechazar($id)
     {
-        $solicitud = SolicitudRegistro::findOrFail($id);
+        $solicitud = DB::table('solicitudes_registro')->where('id', $id)->first();
+        if (!$solicitud) return response()->json(['message' => 'No encontrada'], 404);
 
-        DB::table('historial_solicitudes')->insert([
-            'solicitud_id' => $id,
-            'nombre' => $solicitud->nombre,
-            'email' => $solicitud->email,
-            'documento' => $solicitud->documento,
-            'rol' => $solicitud->rol,
-            'estado_final' => 'rechazado',
-            'created_at' => now(),
-        ]);
+        try {
+            DB::table('historial_solicitudes')->insert([
+                'solicitud_id' => $id,
+                'nombre'       => $solicitud->nombre,
+                'email'        => $solicitud->email,
+                'documento'    => $solicitud->documento,
+                'rol'          => $solicitud->rol,
+                'estado_final' => 'rechazado',
+                'created_at'   => now()
+            ]);
 
-        $solicitud->delete();
-
-        return response()->json(['message' => 'Solicitud rechazada']);
-    }
-
-    private function enviarNotificacionWhatsapp($solicitud)
-    {
-        // TODO: Configurar Twilio más adelante
-        // Por ahora solo dejamos un registro de que el sistema "intentó" enviarlo
-        Log::info("Simulación: Mensaje de WhatsApp listo para enviar a {$solicitud->nombre}");
+            DB::table('solicitudes_registro')->where('id', $id)->delete();
+            return response()->json(['message' => 'Solicitud rechazada']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

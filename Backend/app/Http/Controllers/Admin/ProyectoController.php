@@ -9,28 +9,27 @@ use Illuminate\Support\Facades\DB;
 class ProyectoController extends Controller
 {
     // 1. OBTENER DATOS PARA EL FORMULARIO (Tutores y Estudiantes libres)
-    public function getFormData()
+   public function getFormData()
     {
-        // 1. Traemos tutores de la tabla 'users', ignorando mayúsculas/minúsculas
+        // 1. Traemos SOLO tutores (ignorando mayúsculas)
         $tutores = DB::table('users')
             ->whereRaw('LOWER(rol) = ?', ['tutor'])
-            ->select('id', 'name as nombre') // Transformamos 'name' a 'nombre' para React
+            ->select('id', 'name as nombre')
             ->get();
 
-        // 2. Buscamos quiénes ya tienen proyecto asignado
+        // 2. Buscamos quiénes ya tienen proyecto
         $asignados = DB::table('estudiantes_proyecto')->pluck('estudiante_id')->toArray();
 
-        // 3. Traemos estudiantes de la tabla 'users'
+        // 3. Traemos SOLO estudiantes que tengan opción 'proyecto'
         $query = DB::table('users')
             ->whereRaw('LOWER(rol) = ?', ['estudiante'])
             ->whereRaw('LOWER(opcion_grado) = ?', ['proyecto']);
 
-        // 4. Solo aplicamos el filtro de "No asignados" si la lista no está vacía
+        // 4. Excluimos a los que ya tienen proyecto
         if (count($asignados) > 0) {
             $query->whereNotIn('id', $asignados);
         }
 
-        // Seleccionamos las columnas correctas
         $estudiantes = $query->select('id', 'name as nombre', 'email', 'codigo_estudiante', 'opcion_grado')->get();
 
         return response()->json([
@@ -39,17 +38,14 @@ class ProyectoController extends Controller
         ]);
     }
 
-    // 2. LISTAR TODOS LOS PROYECTOS
     public function index()
     {
-        // Volvemos a unir con la tabla 'users' y traemos 'name'
         $proyectos = DB::table('proyectos as p')
-            ->leftJoin('users as u', 'p.tutor_id', '=', 'u.id')
-            ->select('p.*', 'u.name as tutor_nombre')
+            ->leftJoin('users as u', 'p.tutor_id', '=', 'u.id') // Usamos 'users'
+            ->select('p.*', 'u.name as tutor_nombre') // Extraemos 'name'
             ->orderBy('p.id', 'desc')
             ->get();
 
-        // Contar cuántos estudiantes tiene cada proyecto
         foreach ($proyectos as $proyecto) {
             $proyecto->num_estudiantes = DB::table('estudiantes_proyecto')
                 ->where('proyecto_id', $proyecto->id)
@@ -59,6 +55,8 @@ class ProyectoController extends Controller
         return response()->json($proyectos);
     }
 
+
+    
     // 3. CREAR PROYECTO Y ASIGNAR ESTUDIANTES
     public function store(Request $request)
     {

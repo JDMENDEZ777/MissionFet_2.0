@@ -58,9 +58,16 @@ export default function GestionUsuarios() {
   });
 
   // --- ACCIONES MODALES ---
+  // --- ACCIONES MODALES ---
   const abrirEdit = (usuario) => {
     setUserActivo(usuario);
-    setEditForm(usuario); // Llenamos el formulario con los datos actuales
+    // Llenamos el formulario protegiendo los valores nulos con comillas vacías ''
+    setEditForm({
+      ...usuario,
+      ciclo: usuario.ciclo || '',
+      opcion_grado: usuario.opcion_grado || '',
+      telefono: usuario.telefono || ''
+    });
     setModalEdit(true);
   };
 
@@ -149,8 +156,6 @@ export default function GestionUsuarios() {
             onChange={(e) => setFiltros({...filtros, search: e.target.value})}
             />
             
-            {/* Pégalo aquí mismo */}
-            <button type="button">Buscar</button>
         </div>
 
           <div className="filters">
@@ -231,17 +236,27 @@ export default function GestionUsuarios() {
                 usuariosFiltrados.map(usuario => (
                   <tr key={usuario.id}>
                     <td>{usuario.nombre || usuario.name}</td>
-                    <td>{usuario.rol}</td>
+                    <td style={{ textTransform: 'capitalize' }}>
+                      {usuario.rol === 'admin' ? 'Administrador' : usuario.rol}
+                    </td>
                     <td>{usuario.documento}</td>
                     <td>{usuario.codigo_estudiante || 'N/A'}</td>
                     <td>{usuario.email}</td>
                     <td>{usuario.telefono || 'N/A'}</td>
-                    <td>{usuario.opcion_grado || 'N/A'}</td>
-                    <td>{usuario.ciclo || 'N/A'}</td>
+                    <td style={{ textTransform: 'capitalize' }}>
+                      {usuario.opcion_grado === 'pasantia' ? 'Pasantía' : (usuario.opcion_grado || 'N/A')}
+                    </td>
+                    <td style={{ textTransform: 'capitalize' }}>
+                      {usuario.ciclo === 'tecnico' ? 'Técnico' : 
+                      usuario.ciclo === 'tecnologo' ? 'Tecnólogo' : 
+                      (usuario.ciclo || 'N/A')}
+                    </td>
                     <td>
+                    <td style={{ textTransform: 'capitalize' }}>
                       <span className={`status ${usuario.estado || 'activo'}`}>
                         {usuario.estado || 'Activo'}
                       </span>
+                  </td>
                     </td>
                     <td className="actions">
                       <button className="edit" onClick={() => abrirEdit(usuario)}>🖊</button>

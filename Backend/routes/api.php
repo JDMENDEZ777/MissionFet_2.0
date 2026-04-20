@@ -45,4 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/proyectos', [App\Http\Controllers\Admin\ProyectoController::class, 'index']);
     Route::post('/admin/proyectos', [App\Http\Controllers\Admin\ProyectoController::class, 'store']);
 
+
+    Route::get('/admin/aprobaciones', [AprobacionController::class, 'index']);
+    Route::get('/admin/historial', [AprobacionController::class, 'getHistorial']);
+    Route::post('/admin/aprobaciones/{id}/aprobar', [AprobacionController::class, 'aprobar']);
+    Route::post('/admin/aprobaciones/{id}/rechazar', [AprobacionController::class, 'rechazar']);
+
 });

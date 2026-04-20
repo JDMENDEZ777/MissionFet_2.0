@@ -1,33 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
- import './GestionSeminario.css';  
+import './GestionSeminario.css';  
 
 export default function GestionSeminario() {
   const navigate = useNavigate();
   const [navActive, setNavActive] = useState(false);
   
-  // Estados principales
-  const [activeTab, setActiveTab] = useState('listar'); // 'crear' o 'listar'
+  const [activeTab, setActiveTab] = useState('listar'); 
   const [seminarios, setSeminarios] = useState([]);
   const [tutores, setTutores] = useState([]);
   const [mensaje, setMensaje] = useState({ text: '', type: '' });
-
-  // Estados de Filtros
   const [filtros, setFiltros] = useState({ search: '', estado: '', modalidad: '' });
 
-  // Estados de Modales
   const [modalVer, setModalVer] = useState(false);
   const [modalEditar, setModalEditar] = useState(false);
   const [seminarioSeleccionado, setSeminarioSeleccionado] = useState(null);
   
-  // Estado para estudiantes dentro del modal "Ver Detalles"
   const [estudiantesInscritos, setEstudiantesInscritos] = useState([]);
   const [estudiantesDisponibles, setEstudiantesDisponibles] = useState([]);
   const [mostrarDisponibles, setMostrarDisponibles] = useState(false);
   const [searchEstudiante, setSearchEstudiante] = useState('');
 
-  // Formularios
   const [formCrear, setFormCrear] = useState({
     titulo: '', descripcion: '', fecha: '', hora: '', modalidad: '', lugar: '', cupos: 30, tutor_id: '', archivo_guia: null
   });
@@ -39,7 +33,6 @@ export default function GestionSeminario() {
 
   const fetchDatosIniciales = async () => {
     try {
-      // Pedimos los seminarios y los tutores al mismo tiempo
       const [resSeminarios, resTutores] = await Promise.all([
         api.get('/admin/seminarios'),
         api.get('/admin/tutores')
@@ -57,10 +50,8 @@ export default function GestionSeminario() {
     setTimeout(() => setMensaje({ text: '', type: '' }), 5000);
   };
 
-  // --- LÓGICA: CREAR SEMINARIO (Manejo de Archivos) ---
   const handleCrear = async (e) => {
     e.preventDefault();
-    // Como hay un archivo, DEBEMOS usar FormData en lugar de un objeto JSON normal
     const formData = new FormData();
     Object.keys(formCrear).forEach(key => {
       if (formCrear[key] !== null && formCrear[key] !== '') {
@@ -81,7 +72,6 @@ export default function GestionSeminario() {
     }
   };
 
-  // --- LÓGICA: VER DETALLES Y ESTUDIANTES ---
   const abrirVerDetalles = async (id) => {
     try {
       const response = await api.get(`/admin/seminarios/${id}`);
@@ -107,8 +97,8 @@ export default function GestionSeminario() {
   const handleInscribir = async (estudianteId) => {
     try {
       await api.post(`/admin/seminarios/${seminarioSeleccionado.id}/inscribir`, { estudiante_id: estudianteId });
-      abrirVerDetalles(seminarioSeleccionado.id); // Recargar datos del modal
-      if(mostrarDisponibles) cargarEstudiantesDisponibles(); // Actualizar lista de disponibles
+      abrirVerDetalles(seminarioSeleccionado.id);
+      if(mostrarDisponibles) cargarEstudiantesDisponibles();
     } catch (error) {
       alert(error.response?.data?.error || 'Error al inscribir');
     }
@@ -124,7 +114,6 @@ export default function GestionSeminario() {
     }
   };
 
-  // --- LÓGICA: EDITAR Y ELIMINAR SEMINARIO ---
   const abrirEditar = (seminario) => {
     setFormEditar({
       id: seminario.id,
@@ -137,7 +126,7 @@ export default function GestionSeminario() {
       cupos: seminario.cupos,
       tutor_id: seminario.tutor_id || '',
       estado: seminario.estado,
-      archivo_guia: null // Queda null a menos que el usuario suba uno nuevo
+      archivo_guia: null 
     });
     setModalEditar(true);
   };
@@ -145,7 +134,7 @@ export default function GestionSeminario() {
   const handleEditar = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append('_method', 'PUT'); // Truco para que Laravel acepte archivos en edición
+    formData.append('_method', 'PUT'); 
 
     Object.keys(formEditar).forEach(key => {
       if (formEditar[key] !== null && formEditar[key] !== '') {
@@ -159,7 +148,7 @@ export default function GestionSeminario() {
       });
       mostrarMensaje('Seminario actualizado exitosamente', 'exito');
       setModalEditar(false);
-      fetchDatosIniciales(); // Recargar la tabla
+      fetchDatosIniciales();
     } catch (error) {
       mostrarMensaje('Error al actualizar el seminario', 'error');
     }
@@ -177,7 +166,6 @@ export default function GestionSeminario() {
     }
   };
 
-  // --- FILTROS PARA LISTAR ---
   const seminariosFiltrados = seminarios.filter(s => {
     const matchSearch = s.titulo.toLowerCase().includes(filtros.search.toLowerCase());
     const matchEstado = filtros.estado ? s.estado === filtros.estado : true;
@@ -197,7 +185,6 @@ export default function GestionSeminario() {
   return (
     <div className={`admin-layout ${navActive ? 'nav-active' : ''}`}>
       
-      {/* NAVBAR STANDARD */}
       <div id="logo" onClick={() => setNavActive(!navActive)}>
         <img src="/IMG/logofet.png" alt="Logo FET" className="logo-img" />
       </div>
@@ -243,7 +230,6 @@ export default function GestionSeminario() {
           </button>
         </div>
 
-        {/* --- PESTAÑA: CREAR SEMINARIO --- */}
         {activeTab === 'crear' && (
           <section className="tab-content" style={{display: 'block'}}>
             <form onSubmit={handleCrear} encType="multipart/form-data">
@@ -309,7 +295,6 @@ export default function GestionSeminario() {
                 <div className="form-row">
                   <div className="form-field full-width">
                     <label>Archivo Guía o Material (PDF o Word)</label>
-                    {/* OJO AQUI: el onChange para archivos es diferente */}
                     <input type="file" accept=".pdf,.doc,.docx" onChange={e => setFormCrear({...formCrear, archivo_guia: e.target.files[0]})} />
                     <p className="info-text">Formatos permitidos: PDF, DOC, DOCX. Tamaño máximo: 10MB</p>
                   </div>
@@ -323,7 +308,6 @@ export default function GestionSeminario() {
           </section>
         )}
 
-        {/* --- PESTAÑA: LISTAR SEMINARIOS --- */}
         {activeTab === 'listar' && (
           <section className="tab-content" style={{display: 'block'}}>
             <div className="search-filter">
@@ -356,7 +340,6 @@ export default function GestionSeminario() {
                       <p><strong>Hora:</strong> {seminario.hora}</p>
                       <p><strong>Modalidad:</strong> {seminario.modalidad}</p>
                       <p><strong>Cupos:</strong> {seminario.num_inscritos}/{seminario.cupos}</p>
-                      {/* Asumimos que la URL de tu backend para descargas es /storage/seminarios/ */}
                       {seminario.archivo_guia && (
                         <p><strong>Material:</strong> <a href={`http://localhost:8000/storage/seminarios/${seminario.archivo_guia}`} target="_blank" rel="noreferrer" className="archivo-link">Ver material</a></p>
                       )}
@@ -371,10 +354,8 @@ export default function GestionSeminario() {
             </div>
           </section>
         )}
-
       </main>
 
-      {/* --- MODAL: VER DETALLES Y ESTUDIANTES --- */}
       {modalVer && seminarioSeleccionado && (
         <div className="modal" style={{display: 'block'}}>
           <div className="modal-content">
@@ -391,8 +372,8 @@ export default function GestionSeminario() {
               </div>
             </div>
 
-            <div className="estudiantes-container" style={{marginTop: '30px'}}>
-              <div className="estudiantes-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+            <div className="estudiantes-container">
+              <div className="estudiantes-header">
                 <h3>Estudiantes Inscritos ({estudiantesInscritos.length})</h3>
                 <button className="btn-agregar-estudiantes" onClick={cargarEstudiantesDisponibles}>
                   + Agregar Estudiantes
@@ -404,35 +385,37 @@ export default function GestionSeminario() {
                   <div className="no-estudiantes">No hay estudiantes inscritos.</div>
                 ) : (
                   estudiantesInscritos.map(est => (
-                    <div key={est.id} className="estudiante-item" style={{border: '1px solid #ddd', padding: '10px', margin: '10px 0', borderRadius: '8px'}}>
-                      <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                        <div>
-                          <h4>{est.nombre} <span className="badge badge-inscrito">Inscrito</span></h4>
-                          <p>Email: {est.email}</p>
+                    <div key={est.id} className="estudiante-item">
+                        <div className="estudiante-info">
+                          <strong>{est.nombre}</strong>
+                          <p>{est.email}</p>
                         </div>
-                        <button onClick={() => handleEliminarInscripcion(est.id)} style={{background:'red', color:'white', border:'none', borderRadius:'4px', cursor:'pointer'}}>X Eliminar</button>
-                      </div>
+                        <button className="btn-eliminar-circular" onClick={() => handleEliminarInscripcion(est.id)}>🗑️</button>
                     </div>
                   ))
                 )}
               </div>
 
-              {/* Lista de disponibles para agregar */}
               {mostrarDisponibles && (
-                <div style={{marginTop: '20px', background: '#f9f9f9', padding: '15px', borderRadius: '8px'}}>
+                <div className="estudiantes-disponibles-section" style={{marginTop: '20px', background: '#f9f9f9', padding: '15px', borderRadius: '8px'}}>
                   <h3>Estudiantes Disponibles</h3>
-                  <input type="text" placeholder="Buscar por nombre..." value={searchEstudiante} onChange={e => setSearchEstudiante(e.target.value)} style={{width:'100%', marginBottom:'10px', padding:'8px'}}/>
+                  <input type="text" placeholder="Buscar por nombre..." value={searchEstudiante} onChange={e => setSearchEstudiante(e.target.value)} className="search-estudiantes"/>
                   
+                  <div className="estudiantes-disponibles">
                   {estudiantesDisponiblesFiltrados.length === 0 ? (
-                    <p>No hay estudiantes elegibles disponibles.</p>
+                    <p className="no-estudiantes">No hay estudiantes elegibles disponibles.</p>
                   ) : (
                     estudiantesDisponiblesFiltrados.map(est => (
-                      <div key={est.id} style={{display:'flex', justifyContent:'space-between', padding:'8px', borderBottom:'1px solid #ccc'}}>
-                        <span>{est.nombre} ({est.documento})</span>
-                        <button onClick={() => handleInscribir(est.id)} style={{background:'green', color:'white', border:'none', padding:'5px 10px', cursor:'pointer', borderRadius:'4px'}}>Inscribir</button>
+                      <div key={est.id} className="estudiante-disponible">
+                        <div className="estudiante-info">
+                            <strong>{est.nombre}</strong>
+                            <span>({est.documento})</span>
+                        </div>
+                        <button onClick={() => handleInscribir(est.id)}>Inscribir</button>
                       </div>
                     ))
                   )}
+                  </div>
                 </div>
               )}
             </div>
@@ -440,7 +423,6 @@ export default function GestionSeminario() {
         </div>
       )}
 
-      {/* --- MODAL: EDITAR SEMINARIO --- */}
       {modalEditar && (
         <div className="modal" style={{display: 'block'}}>
           <div className="modal-content">
@@ -515,7 +497,7 @@ export default function GestionSeminario() {
               <div className="form-actions">
                 <button type="submit" className="btn-primary">Guardar Cambios</button>
                 <button type="button" className="btn-secondary" onClick={() => setModalEditar(false)}>Cancelar</button>
-                <button type="button" className="btn-danger" style={{background: 'red', color: 'white'}} onClick={handleEliminarSeminario}>Eliminar Seminario</button>
+                <button type="button" className="btn-danger" onClick={handleEliminarSeminario}>Eliminar Seminario</button>
               </div>
             </form>
           </div>
