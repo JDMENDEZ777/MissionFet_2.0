@@ -338,22 +338,22 @@ export default function EstudianteSeminario() {
 
         {/* ─── OTRAS SECCIONES (Actividades, Clases, Materiales) ──────── */}
         {seccion !== 'inicio' && (
-          <div className="dashboard-card" style={{ minHeight: '400px' }}>
-            <div className="card-header" style={{ marginBottom: 20 }}>
-              <h2 className="card-title">
-                {seccion === 'actividades' ? 'Mis Actividades' : seccion === 'clases' ? 'Aula Virtual' : 'Material de Apoyo'}
-              </h2>
-            </div>
-            
-            {seccion === 'actividades' && (
-              <>
-                <div className="filter-tabs">
-                  <a onClick={() => setFiltro('pendientes')} className={`filter-tab ${filtro === 'pendientes' ? 'active' : ''}`}>Pendientes</a>
-                  <a onClick={() => setFiltro('entregadas')} className={`filter-tab ${filtro === 'entregadas' ? 'active' : ''}`}>Entregadas</a>
-                  <a onClick={() => setFiltro('calificadas')} className={`filter-tab ${filtro === 'calificadas' ? 'active' : ''}`}>Calificadas</a>
-                  <a onClick={() => setFiltro('todas')} className={`filter-tab ${filtro === 'todas' ? 'active' : ''}`}>Todas</a>
-                </div>
+          <>
+            <h1 className="page-title">
+              {seccion === 'actividades' ? 'Gestión de Actividades' : seccion === 'clases' ? 'Aula Virtual' : 'Material de Apoyo'}
+            </h1>
 
+            {seccion === 'actividades' && (
+              <div className="filter-tabs">
+                <a onClick={() => setFiltro('pendientes')} className={`filter-tab ${filtro === 'pendientes' ? 'active' : ''}`}>Pendientes</a>
+                <a onClick={() => setFiltro('entregadas')} className={`filter-tab ${filtro === 'entregadas' ? 'active' : ''}`}>Entregadas</a>
+                <a onClick={() => setFiltro('calificadas')} className={`filter-tab ${filtro === 'calificadas' ? 'active' : ''}`}>Calificadas</a>
+                <a onClick={() => setFiltro('todas')} className={`filter-tab ${filtro === 'todas' ? 'active' : ''}`}>Todas</a>
+              </div>
+            )}
+
+            <div className="dashboard-card" style={{ minHeight: '400px' }}>
+              {seccion === 'actividades' && (
                 <ul className="activity-list">
                   {actividades.length > 0 ? actividades.map(act => (
                     <li className="activity-item" key={act.id}>
@@ -370,7 +370,7 @@ export default function EstudianteSeminario() {
                       {act.mi_entrega && <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>{act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}</span>}
                     </li>
                   )) : (
-                    <div className="empty-state">
+                    <div className="empty-state" style={{ boxShadow: 'none' }}>
                       {filtro === 'pendientes' && (
                         <>
                           <i className="fas fa-check-circle" style={{color: '#28a745'}}></i>
@@ -395,43 +395,43 @@ export default function EstudianteSeminario() {
                     </div>
                   )}
                 </ul>
-              </>
-            )}
+              )}
 
-            {seccion === 'clases' && (
-               <div>
-                  {clases.length === 0 ? <p>No hay clases.</p> : clases.map((clase) => (
-                    <div className="next-class" key={clase.id}>
-                      <div className="class-header">
-                        <h5 className="class-title">{clase.titulo}</h5>
-                        <span className="class-date">{formatearFechaStr(clase.fecha)}</span>
+              {seccion === 'clases' && (
+                <div>
+                    {clases.length === 0 ? <p className="no-data">No hay clases programadas.</p> : clases.map((clase) => (
+                      <div className="next-class" key={clase.id}>
+                        <div className="class-header">
+                          <h5 className="class-title">{clase.titulo}</h5>
+                          <span className="class-date">{formatearFechaStr(clase.fecha)}</span>
+                        </div>
+                        <div className="class-info">
+                          <span className="class-platform"><i className="fas fa-video"></i> {clase.plataforma}</span>
+                          <span className="class-time"><i className="far fa-clock"></i> {clase.hora?.slice(0,5)} ({clase.duracion} min)</span>
+                        </div>
+                        <a href={clase.enlace} className="btn btn-sm btn-primary" style={{color: 'white'}} target="_blank" rel="noreferrer">Unirse</a>
                       </div>
-                      <div className="class-info">
-                        <span className="class-platform"><i className="fas fa-video"></i> {clase.plataforma}</span>
-                        <span className="class-time"><i className="far fa-clock"></i> {clase.hora?.slice(0,5)} ({clase.duracion} min)</span>
+                    ))}
+                </div>
+              )}
+
+              {seccion === 'materiales' && (
+                  <ul className="activity-list">
+                  {materiales.length === 0 ? <p className="no-data">No hay materiales disponibles.</p> : materiales.map(mat => (
+                    <li className="activity-item" key={mat.id}>
+                      <div className="activity-icon"><i className="fas fa-book"></i></div>
+                      <div className="activity-info">
+                        <h3 className="activity-title">{mat.titulo}</h3>
+                        <div className="activity-meta">
+                          <span><i className="far fa-file"></i> {mat.tipo.toUpperCase()}</span>
+                        </div>
                       </div>
-                      <a href={clase.enlace} className="btn btn-sm btn-primary" style={{color: 'white'}} target="_blank" rel="noreferrer">Unirse</a>
-                    </div>
+                    </li>
                   ))}
-               </div>
-            )}
-
-            {seccion === 'materiales' && (
-                <ul className="activity-list">
-                 {materiales.length === 0 ? <p>No hay materiales.</p> : materiales.map(mat => (
-                   <li className="activity-item" key={mat.id}>
-                     <div className="activity-icon"><i className="fas fa-book"></i></div>
-                     <div className="activity-info">
-                       <h3 className="activity-title">{mat.titulo}</h3>
-                       <div className="activity-meta">
-                         <span><i className="far fa-file"></i> {mat.tipo.toUpperCase()}</span>
-                       </div>
-                     </div>
-                   </li>
-                 ))}
-               </ul>
-            )}
-          </div>
+                </ul>
+              )}
+            </div>
+          </>
         )}
 
       </main>
