@@ -464,7 +464,7 @@ export default function EstudianteSeminario() {
 
                   {seccion === 'materiales' && (
                     <div className="recordings-grid">
-                      {materiales.map(mat => {
+                      {categoriaMat === 'todo' && materiales.map(mat => {
                         const randomImg = `https://images.unsplash.com/photo-${1555066931 + Math.floor(Math.random() * 1000)}-?w=400&q=80`;
                         return (
                           <div className="recording-card" key={mat.id}>
@@ -492,6 +492,44 @@ export default function EstudianteSeminario() {
                           </div>
                         );
                       })}
+
+                      {categoriaMat === 'documentation' && [
+                          { title: 'Manual de HTML', size: '2.5MB', type: 'PDF', link: '#' },
+                          { title: 'Guía de PHP', size: '3.1MB', type: 'PDF', link: '#' },
+                          { title: 'Tutorial de JavaScript', size: '1.8MB', type: 'PDF', link: '#' }
+                      ].map((doc, idx) => (
+                        <div className="recording-card" key={idx}>
+                          <div className="video-thumbnail" style={{height: 160}}>
+                            <img src={`https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&q=80`} alt={doc.title} className="thumbnail-img" />
+                            <span className="material-type-badge"><i className="fas fa-file-pdf"></i> {doc.type}</span>
+                          </div>
+                          <div className="recording-info">
+                             <h3 className="recording-title">{doc.title}</h3>
+                             <div className="recording-meta" style={{marginBottom: 15}}>
+                                <span><i className="fas fa-weight-hanging"></i> {doc.size}</span>
+                             </div>
+                             <a href={doc.link} className="material-button"><i className="fas fa-download"></i> Descargar</a>
+                          </div>
+                        </div>
+                      ))}
+
+                      {categoriaMat === 'tools' && [
+                          { name: 'Visual Studio Code', description: 'Editor de código potente y ligero', link: 'https://code.visualstudio.com/download', img: '1555066931' },
+                          { name: 'XAMPP', description: 'Servidor local para PHP y MySQL', link: 'https://www.apachefriends.org/download.html', img: '1498050108' },
+                          { name: 'Node.js', description: 'Entorno de ejecución para JavaScript', link: 'https://nodejs.org/download', img: '1504639725' }
+                      ].map((tool, idx) => (
+                        <div className="recording-card" key={idx}>
+                          <div className="video-thumbnail" style={{height: 160}}>
+                            <img src={`https://images.unsplash.com/photo-${tool.img}?w=400&q=80`} alt={tool.name} className="thumbnail-img" />
+                            <span className="material-type-badge"><i className="fas fa-tools"></i> Herramientas</span>
+                          </div>
+                          <div className="recording-info">
+                             <h3 className="recording-title">{tool.name}</h3>
+                             <p className="material-description" style={{fontSize: '0.85rem'}}>{tool.description}</p>
+                             <a href={tool.link} className="material-button" target="_blank" rel="noreferrer"><i className="fas fa-download"></i> Descargar</a>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
