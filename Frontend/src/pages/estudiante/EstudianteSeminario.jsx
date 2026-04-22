@@ -60,6 +60,7 @@ export default function EstudianteSeminario() {
   const [formEntrega, setFormEntrega]   = useState({ comentario: '', archivos: [] });
   const [videoUrl, setVideoUrl]         = useState(null);
   const [filtroFecha, setFiltroFecha]   = useState('recientes');
+  const [categoriaMat, setCategoriaMat] = useState('todo');
   const [enviando, setEnviando]         = useState(false);
 
   const cargarDashboard = useCallback(async () => {
@@ -364,56 +365,73 @@ export default function EstudianteSeminario() {
               </div>
             )}
 
-            {seccion === 'clases' && clases.length === 0 ? (
+            {seccion === 'materiales' && (
+              <div className="categories-container">
+                <h3>Categoría:</h3>
+                <div className="category-buttons">
+                  <a onClick={() => setCategoriaMat('todo')}  className={`category-btn ${categoriaMat === 'todo' ? 'active' : ''}`}>
+                    <i className="fas fa-th-large"></i> Todo
+                  </a>
+                  <a onClick={() => setCategoriaMat('documentation')} className={`category-btn ${categoriaMat === 'documentation' ? 'active' : ''}`}>
+                    <i className="fas fa-file-alt"></i> Documentación
+                  </a>
+                  <a onClick={() => setCategoriaMat('tools')} className={`category-btn ${categoriaMat === 'tools' ? 'active' : ''}`}>
+                    <i className="fas fa-tools"></i> Herramientas
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {((seccion === 'clases' && clases.length === 0) || (seccion === 'materiales' && materiales.length === 0)) ? (
                <div className="empty-state">
-                  <i className="fas fa-video-slash"></i>
-                  <h3>No hay grabaciones disponibles</h3>
-                  <p>Aún no se han publicado grabaciones de clases para este curso.</p>
+                  <i className={seccion === 'clases' ? "fas fa-video-slash" : "fas fa-book"}></i>
+                  <h3>No hay {seccion === 'clases' ? 'grabaciones' : 'materiales'} disponibles</h3>
+                  <p>Aún no se han publicado {seccion === 'clases' ? 'grabaciones de clases' : 'materiales en esta categoría'}.</p>
                </div>
             ) : (
                 <div className="dashboard-card" style={{ minHeight: '400px' }}>
                   {seccion === 'actividades' && (
-                    <ul className="activity-list">
-                      {actividades.length > 0 ? actividades.map(act => (
-                        <li className="activity-item" key={act.id}>
-                          <div className="activity-icon"><i className={`fas ${iconoTipo(act.tipo)}`}></i></div>
-                          <div className="activity-info">
-                            <h3 className="activity-title">{act.titulo}</h3>
-                            <div className="activity-meta">
-                              <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(act.fecha_limite)}</span>
-                              <span><i className="far fa-clock"></i> {act.hora_limite?.slice(0,5)}</span>
-                              <span style={{marginLeft: 10, fontWeight: 'bold'}}>{act.puntaje} Pts</span>
+                     <ul className="activity-list">
+                        {actividades.length > 0 ? actividades.map(act => (
+                          <li className="activity-item" key={act.id}>
+                            <div className="activity-icon"><i className={`fas ${iconoTipo(act.tipo)}`}></i></div>
+                            <div className="activity-info">
+                              <h3 className="activity-title">{act.titulo}</h3>
+                              <div className="activity-meta">
+                                <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(act.fecha_limite)}</span>
+                                <span><i className="far fa-clock"></i> {act.hora_limite?.slice(0,5)}</span>
+                                <span style={{marginLeft: 10, fontWeight: 'bold'}}>{act.puntaje} Pts</span>
+                              </div>
                             </div>
+                            {!act.mi_entrega && <a className="btn btn-sm btn-primary" style={{color: 'white'}} onClick={() => setModalEntrega(act)}>Entregar</a>}
+                            {act.mi_entrega && <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>{act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}</span>}
+                          </li>
+                        )) : (
+                          <div className="empty-state" style={{ boxShadow: 'none' }}>
+                            {filtro === 'pendientes' && (
+                              <>
+                                <i className="fas fa-check-circle" style={{color: '#28a745'}}></i>
+                                <h3>No tienes actividades pendientes</h3>
+                                <p>¡Felicidades! Has completado todas tus actividades asignadas.</p>
+                              </>
+                            )}
+                            {filtro === 'entregadas' && (
+                              <>
+                                <i className="fas fa-clipboard-check"></i>
+                                <h3>No hay entregas registradas</h3>
+                                <p>Aún no has realizado entregas en este seminario.</p>
+                              </>
+                            )}
+                            {(filtro === 'calificadas' || filtro === 'todas') && (
+                              <>
+                                <i className="fas fa-folder-open"></i>
+                                <h3>No hay actividades</h3>
+                                <p>No se encontraron actividades en esta categoría.</p>
+                              </>
+                            )}
                           </div>
-                          {!act.mi_entrega && <a className="btn btn-sm btn-primary" style={{color: 'white'}} onClick={() => setModalEntrega(act)}>Entregar</a>}
-                          {act.mi_entrega && <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>{act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}</span>}
-                        </li>
-                      )) : (
-                        <div className="empty-state" style={{ boxShadow: 'none' }}>
-                          {filtro === 'pendientes' && (
-                            <>
-                              <i className="fas fa-check-circle" style={{color: '#28a745'}}></i>
-                              <h3>No tienes actividades pendientes</h3>
-                              <p>¡Felicidades! Has completado todas tus actividades asignadas.</p>
-                            </>
-                          )}
-                          {filtro === 'entregadas' && (
-                            <>
-                              <i className="fas fa-clipboard-check"></i>
-                              <h3>No hay entregas registradas</h3>
-                              <p>Aún no has realizado entregas en este seminario.</p>
-                            </>
-                          )}
-                          {(filtro === 'calificadas' || filtro === 'todas') && (
-                            <>
-                              <i className="fas fa-folder-open"></i>
-                              <h3>No hay actividades</h3>
-                              <p>No se encontraron actividades en esta categoría.</p>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </ul>
+                        )}
+                     </ul>
                   )}
 
                   {seccion === 'clases' && (
@@ -445,19 +463,36 @@ export default function EstudianteSeminario() {
                   )}
 
                   {seccion === 'materiales' && (
-                      <ul className="activity-list">
-                      {materiales.length === 0 ? <p className="no-data">No hay materiales disponibles.</p> : materiales.map(mat => (
-                        <li className="activity-item" key={mat.id}>
-                          <div className="activity-icon"><i className="fas fa-book"></i></div>
-                          <div className="activity-info">
-                            <h3 className="activity-title">{mat.titulo}</h3>
-                            <div className="activity-meta">
-                              <span><i className="far fa-file"></i> {mat.tipo.toUpperCase()}</span>
+                    <div className="recordings-grid">
+                      {materiales.map(mat => {
+                        const randomImg = `https://images.unsplash.com/photo-${1555066931 + Math.floor(Math.random() * 1000)}-?w=400&q=80`;
+                        return (
+                          <div className="recording-card" key={mat.id}>
+                            <div className="video-thumbnail" style={{height: 160}}>
+                              <img src={mat.imagen || randomImg} alt={mat.titulo} className="thumbnail-img" />
+                              {mat.tipo && <span className="material-type-badge"><i className="fas fa-tag"></i> {mat.tipo}</span>}
+                            </div>
+                            <div className="recording-info">
+                              <h3 className="recording-title">{mat.titulo}</h3>
+                              <div className="recording-meta" style={{marginBottom: 15}}>
+                                <span><i className="far fa-calendar"></i> {formatearFechaCorta(mat.fecha_subida || new Date())}</span>
+                                {mat.plataforma && <span><i className="fas fa-globe"></i> {mat.plataforma}</span>}
+                              </div>
+                              <p className="material-description" style={{fontSize: '0.85rem', color: '#6c757d', marginBottom: 15, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'}}>
+                                {mat.descripcion || 'Sin descripción disponible.'}
+                              </p>
+                              <div className="material-actions">
+                                {mat.enlace || mat.archivo ? (
+                                  <a href={mat.enlace || mat.archivo} className="material-button" target="_blank" rel="noreferrer">
+                                    <i className={mat.enlace ? "fas fa-external-link-alt" : "fas fa-download"}></i> {mat.enlace ? 'Ver' : 'Descargar'}
+                                  </a>
+                                ) : null}
+                              </div>
                             </div>
                           </div>
-                        </li>
-                      ))}
-                    </ul>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
             )}
