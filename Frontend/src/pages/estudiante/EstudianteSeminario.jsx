@@ -58,6 +58,8 @@ export default function EstudianteSeminario() {
 
   const [modalEntrega, setModalEntrega] = useState(null);
   const [formEntrega, setFormEntrega]   = useState({ comentario: '', archivos: [] });
+  const [videoUrl, setVideoUrl]         = useState(null);
+  const [filtroFecha, setFiltroFecha]   = useState('recientes');
   const [enviando, setEnviando]         = useState(false);
 
   const cargarDashboard = useCallback(async () => {
@@ -398,21 +400,49 @@ export default function EstudianteSeminario() {
               )}
 
               {seccion === 'clases' && (
-                <div>
-                    {clases.length === 0 ? <p className="no-data">No hay clases programadas.</p> : clases.map((clase) => (
-                      <div className="next-class" key={clase.id}>
-                        <div className="class-header">
-                          <h5 className="class-title">{clase.titulo}</h5>
-                          <span className="class-date">{formatearFechaStr(clase.fecha)}</span>
-                        </div>
-                        <div className="class-info">
-                          <span className="class-platform"><i className="fas fa-video"></i> {clase.plataforma}</span>
-                          <span className="class-time"><i className="far fa-clock"></i> {clase.hora?.slice(0,5)} ({clase.duracion} min)</span>
-                        </div>
-                        <a href={clase.enlace} className="btn btn-sm btn-primary" style={{color: 'white'}} target="_blank" rel="noreferrer">Unirse</a>
-                      </div>
-                    ))}
-                </div>
+                <>
+                  <div className="filter-container">
+                    <div className="filter-label">Fecha:</div>
+                    <div className="filter-buttons">
+                      <a onClick={() => setFiltroFecha('recientes')} className={`filter-button ${filtroFecha === 'recientes' ? 'active' : ''}`}>Recientes</a>
+                      <a onClick={() => setFiltroFecha('antiguas')} className={`filter-button ${filtroFecha === 'antiguas' ? 'active' : ''}`}>Antiguas</a>
+                    </div>
+                  </div>
+
+                  {clases.length === 0 ? (
+                    <div className="empty-state">
+                      <i className="fas fa-video-slash"></i>
+                      <h3>No hay grabaciones disponibles</h3>
+                      <p>Aún no se han publicado grabaciones de clases para este curso.</p>
+                    </div>
+                  ) : (
+                    <div className="recordings-grid">
+                      {clases.map(clase => {
+                        const videoId = clase.enlace.includes('youtube.com') || clase.enlace.includes('youtu.be') 
+                          ? clase.enlace.split('v=')[1]?.split('&')[0] || clase.enlace.split('/').pop()
+                          : null;
+                        const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : '/IMG/video-placeholder.jpg';
+                        
+                        return (
+                          <div className="recording-card" key={clase.id}>
+                            <div className="video-thumbnail" onClick={() => setVideoUrl(clase.enlace)}>
+                              <img src={thumbnail} alt={clase.titulo} className="thumbnail-img" />
+                              <div className="play-button"><i className="fas fa-play"></i></div>
+                              <div className="video-duration">{clase.duracion} min</div>
+                            </div>
+                            <div className="recording-info">
+                              <h3 className="recording-title">{clase.titulo}</h3>
+                              <div className="recording-meta">
+                                <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(clase.fecha)}</span>
+                                <span><i className="fas fa-video"></i> {clase.plataforma}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
               )}
 
               {seccion === 'materiales' && (
@@ -482,6 +512,23 @@ export default function EstudianteSeminario() {
         </div>
       )}
 
+      {/* ─── VIDEO MODAL ────────────────────────────────────── */}
+      {videoUrl && (
+        <div className="video-modal" onClick={() => setVideoUrl(null)}>
+          <div className="video-container" onClick={e => e.stopPropagation()}>
+            <div className="close-button-video" onClick={() => setVideoUrl(null)}>
+              <i className="fas fa-times"></i>
+            </div>
+            <div className="video-wrapper" style={{height: '100%'}}>
+              <iframe
+                src={videoUrl.replace('watch?v=', 'embed/')}
+                title="Clase Video"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
