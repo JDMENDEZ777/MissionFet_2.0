@@ -342,7 +342,7 @@ export default function EstudianteSeminario() {
         {seccion !== 'inicio' && (
           <>
             <h1 className="page-title">
-              {seccion === 'actividades' ? 'Gestión de Actividades' : seccion === 'clases' ? 'Aula Virtual' : 'Material de Apoyo'}
+              {seccion === 'actividades' ? 'Gestión de Actividades' : seccion === 'clases' ? 'Grabaciones de Clases' : 'Material de Apoyo'}
             </h1>
 
             {seccion === 'actividades' && (
@@ -354,68 +354,69 @@ export default function EstudianteSeminario() {
               </div>
             )}
 
-            <div className="dashboard-card" style={{ minHeight: '400px' }}>
-              {seccion === 'actividades' && (
-                <ul className="activity-list">
-                  {actividades.length > 0 ? actividades.map(act => (
-                    <li className="activity-item" key={act.id}>
-                      <div className="activity-icon"><i className={`fas ${iconoTipo(act.tipo)}`}></i></div>
-                      <div className="activity-info">
-                        <h3 className="activity-title">{act.titulo}</h3>
-                        <div className="activity-meta">
-                          <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(act.fecha_limite)}</span>
-                          <span><i className="far fa-clock"></i> {act.hora_limite?.slice(0,5)}</span>
-                          <span style={{marginLeft: 10, fontWeight: 'bold'}}>{act.puntaje} Pts</span>
+            {seccion === 'clases' && (
+              <div className="filter-container">
+                <div className="filter-label">Fecha:</div>
+                <div className="filter-buttons">
+                  <a onClick={() => setFiltroFecha('recientes')} className={`filter-button ${filtroFecha === 'recientes' ? 'active' : ''}`}>Recientes</a>
+                  <a onClick={() => setFiltroFecha('antiguas')} className={`filter-button ${filtroFecha === 'antiguas' ? 'active' : ''}`}>Antiguas</a>
+                </div>
+              </div>
+            )}
+
+            {seccion === 'clases' && clases.length === 0 ? (
+               <div className="empty-state">
+                  <i className="fas fa-video-slash"></i>
+                  <h3>No hay grabaciones disponibles</h3>
+                  <p>Aún no se han publicado grabaciones de clases para este curso.</p>
+               </div>
+            ) : (
+                <div className="dashboard-card" style={{ minHeight: '400px' }}>
+                  {seccion === 'actividades' && (
+                    <ul className="activity-list">
+                      {actividades.length > 0 ? actividades.map(act => (
+                        <li className="activity-item" key={act.id}>
+                          <div className="activity-icon"><i className={`fas ${iconoTipo(act.tipo)}`}></i></div>
+                          <div className="activity-info">
+                            <h3 className="activity-title">{act.titulo}</h3>
+                            <div className="activity-meta">
+                              <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(act.fecha_limite)}</span>
+                              <span><i className="far fa-clock"></i> {act.hora_limite?.slice(0,5)}</span>
+                              <span style={{marginLeft: 10, fontWeight: 'bold'}}>{act.puntaje} Pts</span>
+                            </div>
+                          </div>
+                          {!act.mi_entrega && <a className="btn btn-sm btn-primary" style={{color: 'white'}} onClick={() => setModalEntrega(act)}>Entregar</a>}
+                          {act.mi_entrega && <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>{act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}</span>}
+                        </li>
+                      )) : (
+                        <div className="empty-state" style={{ boxShadow: 'none' }}>
+                          {filtro === 'pendientes' && (
+                            <>
+                              <i className="fas fa-check-circle" style={{color: '#28a745'}}></i>
+                              <h3>No tienes actividades pendientes</h3>
+                              <p>¡Felicidades! Has completado todas tus actividades asignadas.</p>
+                            </>
+                          )}
+                          {filtro === 'entregadas' && (
+                            <>
+                              <i className="fas fa-clipboard-check"></i>
+                              <h3>No hay entregas registradas</h3>
+                              <p>Aún no has realizado entregas en este seminario.</p>
+                            </>
+                          )}
+                          {(filtro === 'calificadas' || filtro === 'todas') && (
+                            <>
+                              <i className="fas fa-folder-open"></i>
+                              <h3>No hay actividades</h3>
+                              <p>No se encontraron actividades en esta categoría.</p>
+                            </>
+                          )}
                         </div>
-                      </div>
-                      {!act.mi_entrega && <a className="btn btn-sm btn-primary" style={{color: 'white'}} onClick={() => setModalEntrega(act)}>Entregar</a>}
-                      {act.mi_entrega && <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>{act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}</span>}
-                    </li>
-                  )) : (
-                    <div className="empty-state" style={{ boxShadow: 'none' }}>
-                      {filtro === 'pendientes' && (
-                        <>
-                          <i className="fas fa-check-circle" style={{color: '#28a745'}}></i>
-                          <h3>No tienes actividades pendientes</h3>
-                          <p>¡Felicidades! Has completado todas tus actividades asignadas.</p>
-                        </>
                       )}
-                      {filtro === 'entregadas' && (
-                        <>
-                          <i className="fas fa-clipboard-check"></i>
-                          <h3>No hay entregas registradas</h3>
-                          <p>Aún no has realizado entregas en este seminario.</p>
-                        </>
-                      )}
-                      {(filtro === 'calificadas' || filtro === 'todas') && (
-                        <>
-                          <i className="fas fa-folder-open"></i>
-                          <h3>No hay actividades</h3>
-                          <p>No se encontraron actividades en esta categoría.</p>
-                        </>
-                      )}
-                    </div>
+                    </ul>
                   )}
-                </ul>
-              )}
 
-              {seccion === 'clases' && (
-                <>
-                  <div className="filter-container">
-                    <div className="filter-label">Fecha:</div>
-                    <div className="filter-buttons">
-                      <a onClick={() => setFiltroFecha('recientes')} className={`filter-button ${filtroFecha === 'recientes' ? 'active' : ''}`}>Recientes</a>
-                      <a onClick={() => setFiltroFecha('antiguas')} className={`filter-button ${filtroFecha === 'antiguas' ? 'active' : ''}`}>Antiguas</a>
-                    </div>
-                  </div>
-
-                  {clases.length === 0 ? (
-                    <div className="empty-state">
-                      <i className="fas fa-video-slash"></i>
-                      <h3>No hay grabaciones disponibles</h3>
-                      <p>Aún no se han publicado grabaciones de clases para este curso.</p>
-                    </div>
-                  ) : (
+                  {seccion === 'clases' && (
                     <div className="recordings-grid">
                       {clases.map(clase => {
                         const videoId = clase.enlace.includes('youtube.com') || clase.enlace.includes('youtu.be') 
@@ -442,25 +443,24 @@ export default function EstudianteSeminario() {
                       })}
                     </div>
                   )}
-                </>
-              )}
 
-              {seccion === 'materiales' && (
-                  <ul className="activity-list">
-                  {materiales.length === 0 ? <p className="no-data">No hay materiales disponibles.</p> : materiales.map(mat => (
-                    <li className="activity-item" key={mat.id}>
-                      <div className="activity-icon"><i className="fas fa-book"></i></div>
-                      <div className="activity-info">
-                        <h3 className="activity-title">{mat.titulo}</h3>
-                        <div className="activity-meta">
-                          <span><i className="far fa-file"></i> {mat.tipo.toUpperCase()}</span>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                  {seccion === 'materiales' && (
+                      <ul className="activity-list">
+                      {materiales.length === 0 ? <p className="no-data">No hay materiales disponibles.</p> : materiales.map(mat => (
+                        <li className="activity-item" key={mat.id}>
+                          <div className="activity-icon"><i className="fas fa-book"></i></div>
+                          <div className="activity-info">
+                            <h3 className="activity-title">{mat.titulo}</h3>
+                            <div className="activity-meta">
+                              <span><i className="far fa-file"></i> {mat.tipo.toUpperCase()}</span>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+            )}
           </>
         )}
 
