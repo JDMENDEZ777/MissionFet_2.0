@@ -403,27 +403,25 @@ export default function EstudianteSeminario() {
 
       </main>
       
-      {/* ─── FOOTER (SOLO EN INICIO) ───────────────────────── */}
-      {seccion === 'inicio' && (
-        <footer className="footer">
-          <div className="footer-content">
-            <div className="footer-info">
-              <p>Email: direccion_software@fet.edu.co</p>
-              <p>Dirección: Kilómetro 12, via Neiva – Rivera</p>
-              <p>Teléfono: 6088674935 – (+57) 3223041567</p>
-              
-              <div className="social-links">
-                  <a href="https://www.facebook.com/YoSoyFet" target="_blank" rel="noreferrer"><i className="fab fa-facebook"></i></a>
-                  <a href="https://twitter.com/yosoyfet" target="_blank" rel="noreferrer"><i className="fab fa-twitter"></i></a>
-                  <a href="https://www.instagram.com/fetneiva" target="_blank" rel="noreferrer"><i className="fab fa-instagram"></i></a>
-                  <a href="https://www.youtube.com/channel/UCv647ftA-d--0F02AqF7eng" target="_blank" rel="noreferrer"><i className="fab fa-youtube"></i></a>
-              </div>
-            </div>
+      {/* ─── FOOTER ─────────────────────────────────────────── */}
+      <footer className="footer">
+        <div className="footer-content">
+          <div className="footer-info">
+            <p>Email: direccion_software@fet.edu.co</p>
+            <p>Dirección: Kilómetro 12, via Neiva – Rivera</p>
+            <p>Teléfono: 6088674935 – (+57) 3223041567</p>
             
-            <img src="/IMG/logofet.png" alt="FET Logo" className="footer-image" />
+            <div className="social-links">
+                <a href="https://www.facebook.com/YoSoyFet" target="_blank" rel="noreferrer"><i className="fab fa-facebook"></i></a>
+                <a href="https://twitter.com/yosoyfet" target="_blank" rel="noreferrer"><i className="fab fa-twitter"></i></a>
+                <a href="https://www.instagram.com/fetneiva" target="_blank" rel="noreferrer"><i className="fab fa-instagram"></i></a>
+                <a href="https://www.youtube.com/channel/UCv647ftA-d--0F02AqF7eng" target="_blank" rel="noreferrer"><i className="fab fa-youtube"></i></a>
+            </div>
           </div>
-        </footer>
-      )}
+          
+          <img src="/IMG/logofet.png" alt="FET Logo" className="footer-image" />
+        </div>
+      </footer>
 
       {/* ─── MODAL ENTREGA ──────────────────────────────────── */}
       {modalEntrega && (
