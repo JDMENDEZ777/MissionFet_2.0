@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Actividad extends Model
 {
+    protected $table = 'actividades';
+
     protected $fillable = [
         'seminario_id',
         'tutor_id',

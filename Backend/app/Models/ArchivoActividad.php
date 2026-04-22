@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /** Archivos del enunciado de una actividad (subidos por el tutor) */
 class ArchivoActividad extends Model
 {
+    protected $table = 'archivos_actividad';
+
     protected $fillable = [
         'actividad_id',
         'nombre_archivo',

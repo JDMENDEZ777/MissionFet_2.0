@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ClaseVirtual extends Model
 {
+    protected $table = 'clases_virtuales';
+
     protected $fillable = [
         'seminario_id',
         'tutor_id',

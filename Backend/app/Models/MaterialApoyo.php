@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class MaterialApoyo extends Model
 {
+    protected $table = 'materiales_apoyo';
+
     protected $fillable = [
         'seminario_id',
         'creado_por',

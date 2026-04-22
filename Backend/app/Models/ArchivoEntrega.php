@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /** Archivos adjuntos por el estudiante al realizar una entrega */
 class ArchivoEntrega extends Model
 {
+    protected $table = 'archivos_entrega';
+
     protected $fillable = [
         'entrega_id',
         'nombre_archivo',

@@ -19,7 +19,7 @@ const formatearFechaStr = (dateStr) => {
   const fecha = new Date(dateStr);
   const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
   const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-  return `${dias[fecha.getDay()]} ${fecha.getDate()} de ${meses[fecha.getMonth()]}`;
+  return `${dias[fecha.getDay()]}, ${fecha.getDate()} de ${meses[fecha.getMonth()]} de ${fecha.getFullYear()}`;
 };
 
 const formatearFechaCorta = (dateStr) => {
@@ -39,9 +39,10 @@ export default function EstudianteSeminario() {
   const userAvatar  = localStorage.getItem('user_avatar') || 'https://randomuser.me/api/portraits/men/32.jpg';
 
   const [seccion, setSeccion] = useState('inicio');
-  const [filtro, setFiltro]   = useState('pendientes');
+  const [filtro]              = useState('pendientes');
   const [loading, setLoading] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [notifAbierto, setNotifAbierto] = useState(false);
 
   const [stats, setStats]              = useState(null);
   const [proximaClase, setProximaClase]= useState(null);
@@ -123,16 +124,25 @@ export default function EstudianteSeminario() {
 
   const cerrarSesion = () => { localStorage.clear(); navigate('/login'); };
 
-  // Fecha de hoy formateada de bienvenida
-  const hoyStr = formatearFechaStr(new Date());
+  // Cerrar menús al dar clic afuera
+  useEffect(() => {
+    const closeMenus = () => {
+      setNotifAbierto(false);
+      setMenuAbierto(false);
+    };
+    document.addEventListener('click', closeMenus);
+    return () => document.removeEventListener('click', closeMenus);
+  }, []);
 
-  // Dividir actividades en pendientes/entregadas (simulación rápida para Dashboard)
+  // Simulación de actividades
   const actPendientes = actividades.filter(a => !a.mi_entrega).slice(0, 5);
   const actEntregadas = actividades.filter(a => !!a.mi_entrega).slice(0, 5);
 
   return (
     <div className="es-dashboard-wrapper">
-      
+      {/* Importamos FontAwesome globalmente solo para esta pantalla si no existe */}
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
+
       {/* ─── HEADER ─────────────────────────────────────────── */}
       <header className="header">
         <img src="/IMG/logofet.png" alt="FET Logo" className="logo" />
@@ -145,24 +155,44 @@ export default function EstudianteSeminario() {
         </nav>
         
         <div className="user-profile" style={{ position: 'relative' }}>
-          <div id="notification-bell" style={{ position: 'relative', cursor: 'pointer' }}>
+          
+          <div id="notification-bell" style={{ position: 'relative', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setNotifAbierto(!notifAbierto); setMenuAbierto(false); }}>
             <i className="fas fa-bell notification-icon"></i>
             {stats?.pendientes > 0 && (
-              <span style={{
-                position: 'absolute', top: -6, right: -6, background: '#dc3545', color: '#fff',
-                borderRadius: '50%', fontSize: '0.75rem', width: 20, height: 20,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', border: '2px solid #fff'
+              <span id="notification-badge" style={{
+                position: 'absolute', top: '-6px', right: '-6px', background: '#dc3545', color: '#fff',
+                borderRadius: '50%', fontSize: '0.75rem', width: '20px', height: '20px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', border: '2px solid #fff', zIndex: 2
               }}>{stats.pendientes}</span>
+            )}
+            
+            {notifAbierto && (
+              <div id="notification-panel" style={{
+                position: 'absolute', right: 0, top: '35px', background: '#fff', color: '#343a40', minWidth: '280px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.15)', borderRadius: '8px', zIndex: 10, overflow: 'hidden'
+              }} onClick={e => e.stopPropagation()}>
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>Notificaciones</div>
+                {stats?.pendientes > 0 ? (
+                  <ul style={{ listStyle: 'none', margin: 0, padding: 0, maxHeight: '250px', overflowY: 'auto' }}>
+                    <li style={{ padding: '12px 16px', borderBottom: '1px solid #f2f2f2' }}>
+                        <div style={{ fontSize: '0.97em' }}>Tienes {stats.pendientes} actividades pendientes.</div>
+                    </li>
+                  </ul>
+                ) : (
+                  <div style={{ padding: '16px', color: '#888' }}>No tienes notificaciones nuevas.</div>
+                )}
+              </div>
             )}
           </div>
           
-          <div id="avatar-container" style={{ position: 'relative', marginLeft: 10, cursor: 'pointer' }} onClick={() => setMenuAbierto(!menuAbierto)}>
+          <div id="avatar-container" style={{ position: 'relative', marginLeft: '10px', cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setMenuAbierto(!menuAbierto); setNotifAbierto(false); }}>
             <img src={userAvatar} alt="Avatar" className="avatar" />
             
             {menuAbierto && (
-              <div className="user-menu" onClick={e => e.stopPropagation()}>
+              <div id="user-menu" className="user-menu" onClick={e => e.stopPropagation()}>
                 <div className="user-menu-header">{userName}</div>
-                <button onClick={cerrarSesion}><i className="fas fa-sign-out-alt"></i> Cerrar sesión</button>
+                <a style={{ display: 'block', padding: '12px 16px', color: '#343a40', textDecoration: 'none', borderBottom: '1px solid #eee' }}><i className="fas fa-upload"></i> Cambiar avatar</a>
+                <button type="button" onClick={cerrarSesion}><i className="fas fa-sign-out-alt"></i> Cerrar sesión</button>
               </div>
             )}
           </div>
@@ -176,8 +206,8 @@ export default function EstudianteSeminario() {
           <>
             <section className="welcome-section">
               <div className="welcome-header">
-                <h1 className="welcome-title">Bienvenido, {userName.split(' ')[0]}</h1>
-                <span className="welcome-date">{hoyStr}</span>
+                <h1 className="welcome-title">Bienvenido, {userName}</h1>
+                <span className="welcome-date">{formatearFechaStr(new Date())}</span>
               </div>
               <p className="welcome-message">Aquí encontrarás un resumen de tus actividades pendientes y entregas recientes.</p>
             </section>
@@ -206,7 +236,7 @@ export default function EstudianteSeminario() {
                   <h2 className="card-title">Actividades Pendientes</h2>
                   <div className="card-icon"><i className="fas fa-tasks"></i></div>
                 </div>
-                {actividades.length > 0 ? (
+                {actividades.length > 0 && actPendientes.length > 0 ? (
                   <>
                     <ul className="activity-list">
                       {actPendientes.map(act => (
@@ -216,18 +246,18 @@ export default function EstudianteSeminario() {
                             <h3 className="activity-title">{act.titulo}</h3>
                             <div className="activity-meta">
                               <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(act.fecha_limite)}</span>
-                              <span><i className="far fa-clock"></i> {act.hora_limite?.slice(0,5)}</span>
+                              <span><i className="far fa-clock"></i> {act.hora_limite?.slice(0,5) || '23:59'}</span>
                             </div>
                           </div>
-                          <button className="btn btn-sm btn-outline-primary" onClick={() => { setSeccion('actividades'); setModalEntrega(act); }}>Entregar</button>
+                          <a onClick={() => { setSeccion('actividades'); setModalEntrega(act); }} className="btn btn-sm btn-outline-primary">Entregar</a>
                         </li>
                       ))}
                     </ul>
                     <a onClick={() => setSeccion('actividades')} className="view-all">Ver todas las actividades pendientes</a>
                   </>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                    <i className="fas fa-check-circle fa-3x" style={{ color: '#28a745', marginBottom: '1rem' }}></i>
+                  <div className="text-center py-4" style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                    <i className="fas fa-check-circle fa-3x mb-3" style={{ color: '#28a745', marginBottom: '1rem', fontSize: '3em' }}></i>
                     <p>¡No tienes actividades pendientes!</p>
                   </div>
                 )}
@@ -252,9 +282,9 @@ export default function EstudianteSeminario() {
                             </div>
                           </div>
                           {act.mi_entrega.estado === 'pendiente' ? (
-                            <span className="activity-status status-submitted" style={{marginRight: 10}}>Entregado</span>
+                            <span className="activity-status status-submitted">Entregado</span>
                           ) : (
-                            <span className="activity-status status-graded" style={{marginRight: 10}}>Calificado: {act.mi_entrega.calificacion}</span>
+                            <span className="activity-status status-graded">Calificado: {act.mi_entrega.calificacion}</span>
                           )}
                         </li>
                       ))}
@@ -262,8 +292,8 @@ export default function EstudianteSeminario() {
                     <a onClick={() => setSeccion('actividades')} className="view-all">Ver todas mis entregas</a>
                   </>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                    <i className="fas fa-inbox fa-3x" style={{ color: '#6c757d', marginBottom: '1rem' }}></i>
+                  <div className="text-center py-4" style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                    <i className="fas fa-inbox fa-3x text-muted mb-3" style={{ color: '#6c757d', marginBottom: '1rem', fontSize: '3em' }}></i>
                     <p>No has realizado entregas recientemente</p>
                   </div>
                 )}
@@ -295,8 +325,8 @@ export default function EstudianteSeminario() {
                     </div>
                   ))
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                    <i className="fas fa-chalkboard-teacher fa-3x" style={{ color: '#6c757d', marginBottom: '1rem' }}></i>
+                  <div className="text-center py-4" style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                    <i className="fas fa-chalkboard-teacher fa-3x text-muted mb-3" style={{ color: '#6c757d', marginBottom: '1rem', fontSize: '3em' }}></i>
                     <p>No hay clases programadas próximamente.</p>
                   </div>
                 )}
@@ -306,7 +336,7 @@ export default function EstudianteSeminario() {
           </>
         )}
 
-        {/* ─── OTRAS SECCIONES ─────────────────────────────── */}
+        {/* ─── OTRAS SECCIONES (Actividades, Clases, Materiales) ──────── */}
         {seccion !== 'inicio' && (
           <div className="dashboard-card" style={{ minHeight: '400px' }}>
             <div className="card-header" style={{ marginBottom: 20 }}>
@@ -328,7 +358,7 @@ export default function EstudianteSeminario() {
                          <span style={{marginLeft: 10, fontWeight: 'bold'}}>{act.puntaje} Pts</span>
                        </div>
                      </div>
-                     {!act.mi_entrega && <button className="btn btn-sm btn-primary" onClick={() => setModalEntrega(act)}>Entregar</button>}
+                     {!act.mi_entrega && <a className="btn btn-sm btn-primary" style={{color: 'white'}} onClick={() => setModalEntrega(act)}>Entregar</a>}
                      {act.mi_entrega && <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>{act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}</span>}
                    </li>
                  ))}
@@ -347,7 +377,7 @@ export default function EstudianteSeminario() {
                         <span className="class-platform"><i className="fas fa-video"></i> {clase.plataforma}</span>
                         <span className="class-time"><i className="far fa-clock"></i> {clase.hora?.slice(0,5)} ({clase.duracion} min)</span>
                       </div>
-                      <a href={clase.enlace} className="btn btn-sm btn-primary" target="_blank" rel="noreferrer">Unirse</a>
+                      <a href={clase.enlace} className="btn btn-sm btn-primary" style={{color: 'white'}} target="_blank" rel="noreferrer">Unirse</a>
                     </div>
                   ))}
                </div>
@@ -373,17 +403,24 @@ export default function EstudianteSeminario() {
 
       </main>
       
-      {/* ─── FOOTER ─────────────────────────────────────────── */}
+      {/* ─── FOOTER (SOLO EN INICIO) ───────────────────────── */}
       {seccion === 'inicio' && (
         <footer className="footer">
           <div className="footer-content">
             <div className="footer-info">
-              <h3>Seminario FET</h3>
-              <p>Módulo de gestión y recursos académicos</p>
+              <p>Email: direccion_software@fet.edu.co</p>
+              <p>Dirección: Kilómetro 12, via Neiva – Rivera</p>
+              <p>Teléfono: 6088674935 – (+57) 3223041567</p>
+              
+              <div className="social-links">
+                  <a href="https://www.facebook.com/YoSoyFet" target="_blank" rel="noreferrer"><i className="fab fa-facebook"></i></a>
+                  <a href="https://twitter.com/yosoyfet" target="_blank" rel="noreferrer"><i className="fab fa-twitter"></i></a>
+                  <a href="https://www.instagram.com/fetneiva" target="_blank" rel="noreferrer"><i className="fab fa-instagram"></i></a>
+                  <a href="https://www.youtube.com/channel/UCv647ftA-d--0F02AqF7eng" target="_blank" rel="noreferrer"><i className="fab fa-youtube"></i></a>
+              </div>
             </div>
-            <div>
-              <img src="/IMG/logofet.png" alt="FET" className="footer-image" style={{ height: 50 }} />
-            </div>
+            
+            <img src="/IMG/logofet.png" alt="FET Logo" className="footer-image" />
           </div>
         </footer>
       )}

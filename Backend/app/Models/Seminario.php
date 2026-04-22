@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Seminario extends Model
 {
+    protected $table = 'seminarios';
+
     protected $fillable = [
         'titulo',
         'descripcion',
