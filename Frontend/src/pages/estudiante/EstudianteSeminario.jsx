@@ -544,10 +544,8 @@ export default function EstudianteSeminario() {
                     </>
                   )}
                 </div>
-            )}
           </>
         )}
-
       </main>
       
       {/* ─── FOOTER ─────────────────────────────────────────── */}
