@@ -39,7 +39,7 @@ export default function EstudianteSeminario() {
   const userAvatar  = localStorage.getItem('user_avatar') || 'https://randomuser.me/api/portraits/men/32.jpg';
 
   const [seccion, setSeccion] = useState('inicio');
-  const [filtro]              = useState('pendientes');
+  const [filtro, setFiltro]   = useState('pendientes');
   const [loading, setLoading] = useState(false);
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [notifAbierto, setNotifAbierto] = useState(false);
@@ -346,23 +346,56 @@ export default function EstudianteSeminario() {
             </div>
             
             {seccion === 'actividades' && (
-               <ul className="activity-list">
-                 {actividades.length === 0 ? <p>No hay registros.</p> : actividades.map(act => (
-                   <li className="activity-item" key={act.id}>
-                     <div className="activity-icon"><i className={`fas ${iconoTipo(act.tipo)}`}></i></div>
-                     <div className="activity-info">
-                       <h3 className="activity-title">{act.titulo}</h3>
-                       <div className="activity-meta">
-                         <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(act.fecha_limite)}</span>
-                         <span><i className="far fa-clock"></i> {act.hora_limite?.slice(0,5)}</span>
-                         <span style={{marginLeft: 10, fontWeight: 'bold'}}>{act.puntaje} Pts</span>
-                       </div>
-                     </div>
-                     {!act.mi_entrega && <a className="btn btn-sm btn-primary" style={{color: 'white'}} onClick={() => setModalEntrega(act)}>Entregar</a>}
-                     {act.mi_entrega && <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>{act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}</span>}
-                   </li>
-                 ))}
-               </ul>
+              <>
+                <div className="filter-tabs">
+                  <a onClick={() => setFiltro('pendientes')} className={`filter-tab ${filtro === 'pendientes' ? 'active' : ''}`}>Pendientes</a>
+                  <a onClick={() => setFiltro('entregadas')} className={`filter-tab ${filtro === 'entregadas' ? 'active' : ''}`}>Entregadas</a>
+                  <a onClick={() => setFiltro('calificadas')} className={`filter-tab ${filtro === 'calificadas' ? 'active' : ''}`}>Calificadas</a>
+                  <a onClick={() => setFiltro('todas')} className={`filter-tab ${filtro === 'todas' ? 'active' : ''}`}>Todas</a>
+                </div>
+
+                <ul className="activity-list">
+                  {actividades.length > 0 ? actividades.map(act => (
+                    <li className="activity-item" key={act.id}>
+                      <div className="activity-icon"><i className={`fas ${iconoTipo(act.tipo)}`}></i></div>
+                      <div className="activity-info">
+                        <h3 className="activity-title">{act.titulo}</h3>
+                        <div className="activity-meta">
+                          <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(act.fecha_limite)}</span>
+                          <span><i className="far fa-clock"></i> {act.hora_limite?.slice(0,5)}</span>
+                          <span style={{marginLeft: 10, fontWeight: 'bold'}}>{act.puntaje} Pts</span>
+                        </div>
+                      </div>
+                      {!act.mi_entrega && <a className="btn btn-sm btn-primary" style={{color: 'white'}} onClick={() => setModalEntrega(act)}>Entregar</a>}
+                      {act.mi_entrega && <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>{act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}</span>}
+                    </li>
+                  )) : (
+                    <div className="empty-state">
+                      {filtro === 'pendientes' && (
+                        <>
+                          <i className="fas fa-check-circle" style={{color: '#28a745'}}></i>
+                          <h3>No tienes actividades pendientes</h3>
+                          <p>¡Felicidades! Has completado todas tus actividades asignadas.</p>
+                        </>
+                      )}
+                      {filtro === 'entregadas' && (
+                        <>
+                          <i className="fas fa-clipboard-check"></i>
+                          <h3>No hay entregas registradas</h3>
+                          <p>Aún no has realizado entregas en este seminario.</p>
+                        </>
+                      )}
+                      {(filtro === 'calificadas' || filtro === 'todas') && (
+                        <>
+                          <i className="fas fa-folder-open"></i>
+                          <h3>No hay actividades</h3>
+                          <p>No se encontraron actividades en esta categoría.</p>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </ul>
+              </>
             )}
 
             {seccion === 'clases' && (
