@@ -382,14 +382,7 @@ export default function EstudianteSeminario() {
               </div>
             )}
 
-            {((seccion === 'clases' && clases.length === 0) || (seccion === 'materiales' && materiales.length === 0)) ? (
-               <div className="empty-state">
-                  <i className={seccion === 'clases' ? "fas fa-video-slash" : "fas fa-book"}></i>
-                  <h3>No hay {seccion === 'clases' ? 'grabaciones' : 'materiales'} disponibles</h3>
-                  <p>Aún no se han publicado {seccion === 'clases' ? 'grabaciones de clases' : 'materiales en esta categoría'}.</p>
-               </div>
-            ) : (
-                <div className="dashboard-card" style={{ minHeight: '400px' }}>
+            <div className="dashboard-card" style={{ minHeight: '400px' }}>
                   {seccion === 'actividades' && (
                      <ul className="activity-list">
                         {actividades.length > 0 ? actividades.map(act => (
@@ -435,34 +428,52 @@ export default function EstudianteSeminario() {
                   )}
 
                   {seccion === 'clases' && (
-                    <div className="recordings-grid">
-                      {clases.map(clase => {
-                        const videoId = clase.enlace.includes('youtube.com') || clase.enlace.includes('youtu.be') 
-                          ? clase.enlace.split('v=')[1]?.split('&')[0] || clase.enlace.split('/').pop()
-                          : null;
-                        const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : '/IMG/video-placeholder.jpg';
-                        
-                        return (
-                          <div className="recording-card" key={clase.id}>
-                            <div className="video-thumbnail" onClick={() => setVideoUrl(clase.enlace)}>
-                              <img src={thumbnail} alt={clase.titulo} className="thumbnail-img" />
-                              <div className="play-button"><i className="fas fa-play"></i></div>
-                              <div className="video-duration">{clase.duracion} min</div>
-                            </div>
-                            <div className="recording-info">
-                              <h3 className="recording-title">{clase.titulo}</h3>
-                              <div className="recording-meta">
-                                <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(clase.fecha)}</span>
-                                <span><i className="fas fa-video"></i> {clase.plataforma}</span>
+                    <>
+                    {clases.length === 0 ? (
+                      <div className="empty-state" style={{boxShadow: 'none'}}>
+                         <i className="fas fa-video-slash"></i>
+                         <h3>No hay grabaciones disponibles</h3>
+                         <p>Aún no se han publicado grabaciones de clases para este curso.</p>
+                      </div>
+                    ) : (
+                      <div className="recordings-grid">
+                        {clases.map(clase => {
+                          const videoId = clase.enlace.includes('youtube.com') || clase.enlace.includes('youtu.be') 
+                            ? clase.enlace.split('v=')[1]?.split('&')[0] || clase.enlace.split('/').pop()
+                            : null;
+                          const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : '/IMG/video-placeholder.jpg';
+                          
+                          return (
+                            <div className="recording-card" key={clase.id}>
+                              <div className="video-thumbnail" onClick={() => setVideoUrl(clase.enlace)}>
+                                <img src={thumbnail} alt={clase.titulo} className="thumbnail-img" />
+                                <div className="play-button"><i className="fas fa-play"></i></div>
+                                <div className="video-duration">{clase.duracion} min</div>
+                              </div>
+                              <div className="recording-info">
+                                <h3 className="recording-title">{clase.titulo}</h3>
+                                <div className="recording-meta">
+                                  <span><i className="far fa-calendar-alt"></i> {formatearFechaCorta(clase.fecha)}</span>
+                                  <span><i className="fas fa-video"></i> {clase.plataforma}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    </>
                   )}
 
                   {seccion === 'materiales' && (
+                    <>
+                    {categoriaMat === 'todo' && materiales.length === 0 && (
+                       <div className="empty-state" style={{boxShadow: 'none'}}>
+                          <i className="fas fa-book"></i>
+                          <h3>No hay materiales disponibles</h3>
+                          <p>Aún no se han publicado materiales en esta categoría.</p>
+                       </div>
+                    )}
                     <div className="recordings-grid">
                       {categoriaMat === 'todo' && materiales.map(mat => {
                         const randomImg = `https://images.unsplash.com/photo-${1555066931 + Math.floor(Math.random() * 1000)}-?w=400&q=80`;
@@ -500,15 +511,15 @@ export default function EstudianteSeminario() {
                       ].map((doc, idx) => (
                         <div className="recording-card" key={idx}>
                           <div className="video-thumbnail" style={{height: 160}}>
-                            <img src={`https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&q=80`} alt={doc.title} className="thumbnail-img" />
-                            <span className="material-type-badge"><i className="fas fa-file-pdf"></i> {doc.type}</span>
+                            <img src={idx === 1 ? 'https://images.unsplash.com/photo-1555066931?w=400&q=80' : `https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&q=80`} alt={doc.title} className="thumbnail-img" />
                           </div>
                           <div className="recording-info">
-                             <h3 className="recording-title">{doc.title}</h3>
+                             <h3 className="recording-title" style={{fontSize: '1.4rem', fontWeight: 700}}>{doc.title}</h3>
                              <div className="recording-meta" style={{marginBottom: 15}}>
+                                <span><i className="fas fa-file-pdf"></i> {doc.type}</span>
                                 <span><i className="fas fa-weight-hanging"></i> {doc.size}</span>
                              </div>
-                             <a href={doc.link} className="material-button"><i className="fas fa-download"></i> Descargar</a>
+                             <a href={doc.link} className="material-button" style={{padding: '10px 20px'}}><i className="fas fa-download"></i> Descargar</a>
                           </div>
                         </div>
                       ))}
@@ -521,16 +532,16 @@ export default function EstudianteSeminario() {
                         <div className="recording-card" key={idx}>
                           <div className="video-thumbnail" style={{height: 160}}>
                             <img src={`https://images.unsplash.com/photo-${tool.img}?w=400&q=80`} alt={tool.name} className="thumbnail-img" />
-                            <span className="material-type-badge"><i className="fas fa-tools"></i> Herramientas</span>
                           </div>
                           <div className="recording-info">
-                             <h3 className="recording-title">{tool.name}</h3>
-                             <p className="material-description" style={{fontSize: '0.85rem'}}>{tool.description}</p>
-                             <a href={tool.link} className="material-button" target="_blank" rel="noreferrer"><i className="fas fa-download"></i> Descargar</a>
+                             <h3 className="recording-title" style={{fontSize: '1.4rem', fontWeight: 700}}>{tool.name}</h3>
+                             <p className="material-description" style={{fontSize: '0.85rem', marginBottom: 15}}>{tool.description}</p>
+                             <a href={tool.link} className="material-button" target="_blank" rel="noreferrer" style={{padding: '10px 20px'}}><i className="fas fa-download"></i> Descargar</a>
                           </div>
                         </div>
                       ))}
                     </div>
+                    </>
                   )}
                 </div>
             )}
