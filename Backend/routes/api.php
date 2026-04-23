@@ -13,6 +13,7 @@ Route::post('/registro', [AuthController::class, 'register']);
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/dashboard-stats', [DashboardController::class, 'index']);
+    Route::post('/perfil/avatar', [App\Http\Controllers\ProfileController::class, 'updateAvatar']);
 
     // ── ADMIN: Aprobaciones ───────────────────────────────────────────────────
     Route::get('/admin/dashboard',   [App\Http\Controllers\Admin\DashboardController::class, 'index']);

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import './EstudianteSeminario.css';
+import AvatarModal from '../../components/AvatarModal';
 
 // ─────────────────────────────────────────────────────────────
 // Utilidades
@@ -36,7 +37,7 @@ export default function EstudianteSeminario() {
 
   const seminarioId = localStorage.getItem('seminario_id') || 1;
   const userName    = localStorage.getItem('user_name') || 'Estudiante';
-  const userAvatar  = localStorage.getItem('user_avatar') || 'https://randomuser.me/api/portraits/men/32.jpg';
+  const [userAvatar, setUserAvatar] = useState(localStorage.getItem('user_avatar') || 'https://randomuser.me/api/portraits/men/32.jpg');
 
   const [seccion, setSeccion] = useState('inicio');
   const [filtro, setFiltro]   = useState('pendientes');
@@ -62,6 +63,7 @@ export default function EstudianteSeminario() {
   const [filtroFecha, setFiltroFecha]   = useState('recientes');
   const [categoriaMat, setCategoriaMat] = useState('todo');
   const [enviando, setEnviando]         = useState(false);
+  const [modalAvatar, setModalAvatar]   = useState(false);
 
   const cargarDashboard = useCallback(async () => {
     setLoading(true);
@@ -194,7 +196,9 @@ export default function EstudianteSeminario() {
             {menuAbierto && (
               <div id="user-menu" className="user-menu" onClick={e => e.stopPropagation()}>
                 <div className="user-menu-header">{userName}</div>
-                <a style={{ display: 'block', padding: '12px 16px', color: '#343a40', textDecoration: 'none', borderBottom: '1px solid #eee' }}><i className="fas fa-upload"></i> Cambiar avatar</a>
+                <a onClick={() => setModalAvatar(true)} style={{ display: 'block', padding: '12px 16px', color: '#343a40', textDecoration: 'none', borderBottom: '1px solid #eee', cursor: 'pointer' }}>
+                  <i className="fas fa-upload"></i> Cambiar avatar
+                </a>
                 <button type="button" onClick={cerrarSesion}><i className="fas fa-sign-out-alt"></i> Cerrar sesión</button>
               </div>
             )}
@@ -611,6 +615,14 @@ export default function EstudianteSeminario() {
           </div>
         </div>
       )}
+
+      {/* ─── MODAL AVATAR ────────────────────────────────────── */}
+      <AvatarModal 
+        isOpen={modalAvatar} 
+        onClose={() => setModalAvatar(false)} 
+        currentAvatar={userAvatar}
+        onAvatarUpdate={(newUrl) => setUserAvatar(newUrl)}
+      />
     </div>
   );
 }
