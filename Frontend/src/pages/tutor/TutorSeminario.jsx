@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import './TutorSeminario.css';
+import AvatarModal from '../../components/AvatarModal';
 
 // ─────────────────────────────────────────────────────────────
 // Utilidades auxiliares
@@ -36,7 +37,7 @@ export default function TutorSeminario() {
 
   const seminarioId = localStorage.getItem('seminario_id') || 1;
   const userName    = localStorage.getItem('user_name') || 'Tutor';
-  const userAvatar  = localStorage.getItem('user_avatar') || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y';
+  const [userAvatar, setUserAvatar] = useState(localStorage.getItem('user_avatar') || 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y');
 
   // ── Estado global ──────────────────────────────────────────
   const [seccion, setSeccion]       = useState('inicio');   // inicio | actividades | clases | materiales
@@ -55,6 +56,7 @@ export default function TutorSeminario() {
   const [modalActividad, setModalActividad] = useState(false);
   const [modalClase, setModalClase]         = useState(false);
   const [modalMaterial, setModalMaterial]   = useState(false);
+  const [modalAvatar, setModalAvatar]       = useState(false);
   const [editando, setEditando] = useState(null);
 
   // Formularios
@@ -208,8 +210,12 @@ export default function TutorSeminario() {
         
         {/* Header Superior */}
         <header className="header">
-          <h1>Panel de Control</h1>
-          <div className="user-profile">
+          <h1>
+            {seccion === 'inicio' ? 'Panel de Control' : 
+             seccion === 'actividades' ? 'Gestión de Actividades' : 
+             seccion === 'clases' ? 'Aula Virtual' : 'Material de Apoyo'}
+          </h1>
+          <div className="user-profile" onClick={() => setModalAvatar(true)}>
             <img src={userAvatar} alt="Avatar" />
             <span>{userName}</span>
           </div>
@@ -424,6 +430,14 @@ export default function TutorSeminario() {
            </div>
         </div>
       )}
+
+      {/* ─── MODAL AVATAR ────────────────────────────────────── */}
+      <AvatarModal 
+        isOpen={modalAvatar} 
+        onClose={() => setModalAvatar(false)} 
+        currentAvatar={userAvatar}
+        onAvatarUpdate={(newUrl) => setUserAvatar(newUrl)}
+      />
 
     </div>
   );
