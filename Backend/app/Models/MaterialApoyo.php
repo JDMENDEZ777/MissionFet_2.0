@@ -20,6 +20,9 @@ class MaterialApoyo extends Model
         'titulo',
         'descripcion',
         'tipo',
+        'plataforma',
+        'enlace',
+        'thumbnail_url',
     ];
 
     public function seminario(): BelongsTo
