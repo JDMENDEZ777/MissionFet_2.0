@@ -35,6 +35,7 @@ export default function TutorSeminario() {
   const [seccion, setSeccion] = useState('inicio');
   const [filtro, setFiltro]   = useState('todas');
   const [loading, setLoading] = useState(false);
+  const [guardando, setGuardando] = useState(false);
 
   // Datos
   const [stats,          setStats]          = useState(null);
@@ -50,7 +51,12 @@ export default function TutorSeminario() {
   const [modalClase,     setModalClase]     = useState(false);
   const [modalMaterial,  setModalMaterial]  = useState(false);
   const [modalGrabacion, setModalGrabacion] = useState(false);
+  const [modalEntregas,  setModalEntregas]  = useState(false);
   const [editando,       setEditando]       = useState(null);
+
+  // Datos de entregas
+  const [entregas, setEntregas] = useState([]);
+  const [actividadSeleccionada, setActividadSeleccionada] = useState(null);
 
   // Formularios
   const [formActividad, setFormActividad] = useState({ titulo:'', descripcion:'', fecha_limite:'', hora_limite:'23:59', tipo:'tarea', puntaje:5, archivos:[] });
@@ -64,42 +70,42 @@ export default function TutorSeminario() {
 
   // ── Carga ─────────────────────────────────────────────────
   const cargarDashboard = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await api.get(`/tutor/seminarios/${seminarioId}/dashboard`);
       setStats(data.stats);
       setProximaClase(data.proxima_clase);
     } catch (e) { console.error(e); }
-    finally { setLoading(false); }
   }, [seminarioId]);
 
   const cargarActividades = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await api.get(`/tutor/seminarios/${seminarioId}/actividades?filtro=${filtro}`);
       const arr = data.data || [];
       setActividades(arr);
       setProximasActivs(arr.slice(0, 3));
     } catch (e) { console.error(e); }
-    finally { setLoading(false); }
   }, [seminarioId, filtro]);
 
   const cargarClases = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await api.get(`/tutor/seminarios/${seminarioId}/clases`);
-      setClases(data.data || []);
+      const clasesData = data.data || [];
+      setClases(clasesData);
+      setGrabaciones(clasesData.filter(c => c.url_grabacion).map(c => ({
+        id: c.id,
+        titulo_clase: c.titulo,
+        descripcion: c.descripcion,
+        fecha_subida: c.updated_at,
+        url_grabacion: c.url_grabacion
+      })));
     } catch (e) { console.error(e); }
-    finally { setLoading(false); }
   }, [seminarioId]);
 
   const cargarMateriales = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await api.get(`/tutor/seminarios/${seminarioId}/materiales`);
       setMateriales(data.data || []);
     } catch (e) { console.error(e); }
-    finally { setLoading(false); }
   }, [seminarioId]);
 
   const cargarEstudiantes = useCallback(async () => {
@@ -119,16 +125,114 @@ export default function TutorSeminario() {
   // ── Acciones ──────────────────────────────────────────────
   const submitActividad = async (e) => {
     e.preventDefault();
+    if (guardando) return;
+    setGuardando(true);
     const fd = new FormData();
     Object.entries(formActividad).forEach(([k,v]) => {
-      if (k === 'archivos') v.forEach(f => fd.append('archivos[]', f));
-      else fd.append(k, v);
+      if (k === 'archivos') {
+        v.forEach(f => fd.append('archivos[]', f));
+      } else if (k === 'permitir_entregas_tarde') {
+        fd.append(k, v ? 1 : 0);
+      } else {
+        fd.append(k, v);
+      }
     });
     try {
       if (editando) await api.post(`/tutor/seminarios/${seminarioId}/actividades/${editando}?_method=PUT`, fd);
       else          await api.post(`/tutor/seminarios/${seminarioId}/actividades`, fd);
       setModalActividad(false); resetForms(); cargarActividades();
-    } catch (e) { console.error(e); alert('Error al guardar'); }
+    } catch (e) {
+      console.error(e);
+      const errors = e.response?.data?.errors;
+      if (errors) alert('Errores de validación:\n' + Object.values(errors).flat().join('\n'));
+      else alert('Error al guardar la actividad');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const submitMaterial = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post(`/tutor/seminarios/${seminarioId}/materiales`, formMaterial);
+      setMaterialCategory('');
+      resetForms();
+      cargarMateriales();
+      alert('¡Material publicado exitosamente!');
+    } catch (e) {
+      console.error(e);
+      alert('Error al publicar el material');
+    }
+  };
+
+  const eliminarMaterial = async (id) => {
+    if (!window.confirm('¿Deseas eliminar este material?')) return;
+    try {
+      await api.delete(`/tutor/seminarios/${seminarioId}/materiales/${id}`);
+      cargarMateriales();
+    } catch (e) { console.error(e); }
+  };
+
+  const editarActividad = (act) => {
+    resetForms();
+    setFormActividad({
+      titulo: act.titulo,
+      descripcion: act.descripcion || '',
+      fecha_limite: act.fecha_limite ? act.fecha_limite.slice(0,10) : '',
+      hora_limite: act.hora_limite ? act.hora_limite.slice(0,5) : '23:59',
+      tipo: act.tipo || 'tarea',
+      puntaje: act.puntaje || 5,
+      permitir_entregas_tarde: act.permitir_entregas_tarde || false,
+      archivos: []
+    });
+    setEditando(act.id);
+    setModalActividad(true);
+  };
+
+  const eliminarActividad = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta actividad? Se borrarán también todas las entregas de los estudiantes.')) return;
+    try {
+      await api.delete(`/tutor/seminarios/${seminarioId}/actividades/${id}`);
+      cargarActividades();
+      cargarDashboard();
+    } catch (e) {
+      console.error(e);
+      alert('Error al eliminar la actividad');
+    }
+  };
+
+  const abrirEntregas = async (actId) => {
+    setLoading(true);
+    try {
+      const { data } = await api.get(`/tutor/seminarios/${seminarioId}/actividades/${actId}/entregas`);
+      setEntregas(data.entregas || []);
+      setActividadSeleccionada(data.actividad);
+      setModalEntregas(true);
+    } catch (e) {
+      console.error(e);
+      alert('Error al cargar entregas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitCalificar = async (entregaId, calificacion, comentario) => {
+    if (!calificacion) return alert('La calificación es obligatoria');
+    try {
+      await api.post(`/tutor/seminarios/${seminarioId}/actividades/${actividadSeleccionada.id}/entregas/${entregaId}/calificar`, {
+        calificacion,
+        comentario_tutor: comentario
+      });
+      // Actualizar lista local de entregas
+      setEntregas(prev => prev.map(ent => 
+        ent.id === entregaId ? { ...ent, calificacion, comentario_tutor: comentario, estado: 'calificado', fecha_calificacion: new Date().toISOString() } : ent
+      ));
+      cargarActividades(); // Recargar para actualizar contadores
+      cargarDashboard();
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.message || 'Error al calificar');
+    }
   };
 
   const submitClase = async (e) => {
@@ -137,24 +241,85 @@ export default function TutorSeminario() {
       if (editando) await api.put(`/tutor/seminarios/${seminarioId}/clases/${editando}`, formClase);
       else          await api.post(`/tutor/seminarios/${seminarioId}/clases`, formClase);
       setModalClase(false); resetForms(); cargarClases(); cargarDashboard();
-    } catch (e) { console.error(e); alert('Error al guardar'); }
+    } catch (e) {
+      console.error(e);
+      const errors = e.response?.data?.errors;
+      if (errors) alert('Errores de validación:\n' + Object.values(errors).flat().join('\n'));
+      else alert('Error al programar la clase');
+    }
   };
 
-  const submitMaterial = async (e) => {
-    e.preventDefault();
-    const fd = new FormData();
-    Object.entries(formMaterial).forEach(([k,v]) => {
-      if (k === 'archivos') v.forEach(f => fd.append('archivos[]', f));
-      else fd.append(k, v);
+  const editarClase = (clase) => {
+    resetForms();
+    setFormClase({
+      titulo: clase.titulo,
+      descripcion: clase.descripcion || '',
+      fecha: clase.fecha ? clase.fecha.slice(0,10) : '',
+      hora: clase.hora ? clase.hora.slice(0,5) : '',
+      duracion: clase.duracion || 60,
+      plataforma: clase.plataforma || 'Zoom',
+      enlace: clase.enlace || ''
     });
+    setEditando(clase.id);
+    setModalClase(true);
+  };
+
+  const eliminarClase = async (id) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta clase virtual?')) return;
     try {
-      await api.post(`/tutor/seminarios/${seminarioId}/materiales`, fd);
-      setModalMaterial(false); resetForms(); cargarMateriales();
-    } catch (e) { console.error(e); alert('Error al guardar'); }
+      await api.delete(`/tutor/seminarios/${seminarioId}/clases/${id}`);
+      cargarClases();
+      cargarDashboard();
+    } catch (e) {
+      console.error(e);
+      alert('Error al eliminar la clase');
+    }
+  };
+
+  const editarGrabacion = (clase) => {
+    resetForms();
+    setFormGrabacion({
+      clase_id: clase.id,
+      url_grabacion: clase.url_grabacion || '',
+      descripcion: '' // No recuperamos la descripcion antigua aquí porque en backend se concatena, o podríamos dejarlo en blanco para que añada nuevas notas
+    });
+    setModalGrabacion(true);
+  };
+
+  const eliminarGrabacion = async (claseId) => {
+    if (!window.confirm('¿Estás seguro de eliminar el enlace de la grabación?')) return;
+    try {
+      await api.delete(`/tutor/seminarios/${seminarioId}/clases/${claseId}/grabacion`);
+      cargarClases();
+    } catch (e) {
+      console.error(e);
+      alert('Error al eliminar la grabación');
+    }
+  };
+
+
+
+  const submitGrabacion = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post(`/tutor/seminarios/${seminarioId}/clases/${formGrabacion.clase_id}/grabacion`, {
+        url_grabacion: formGrabacion.url_grabacion,
+        descripcion: formGrabacion.descripcion
+      });
+      setModalGrabacion(false); 
+      resetForms(); 
+      cargarClases(); 
+      cargarDashboard(); // Actualiza estadísticas si es necesario
+    } catch (e) {
+      console.error(e);
+      const errors = e.response?.data?.errors;
+      if (errors) alert('Errores de validación:\n' + Object.values(errors).flat().join('\n'));
+      else alert('Error al subir grabación');
+    }
   };
 
   const resetForms = () => {
-    setFormActividad({ titulo:'', descripcion:'', fecha_limite:'', hora_limite:'23:59', tipo:'tarea', puntaje:5, archivos:[] });
+    setFormActividad({ titulo:'', descripcion:'', fecha_limite:'', hora_limite:'23:59', tipo:'tarea', puntaje:5, permitir_entregas_tarde: false, archivos:[] });
     setFormClase({ titulo:'', descripcion:'', fecha:'', hora:'', duracion:90, plataforma:'Zoom', enlace:'' });
     setFormMaterial({ titulo:'', descripcion:'', tipo:'video_links', plataforma:'youtube', enlace:'', thumbnail_url:'', estudiante_id:'', archivos:[] });
     setFormGrabacion({ clase_id:'', url_grabacion:'', descripcion:'' });
@@ -215,11 +380,6 @@ export default function TutorSeminario() {
             </h1>
             {seccion === 'clases' && <p>Gestiona tus clases virtuales y grabaciones</p>}
           </div>
-          {seccion === 'actividades' && (
-            <button className="t-btn" onClick={() => { resetForms(); setModalActividad(true); }}>
-              <i className="fas fa-plus t-mr-1"></i>Nueva Actividad
-            </button>
-          )}
         </div>
 
         {/* ════════ INICIO ════════ */}
@@ -277,11 +437,7 @@ export default function TutorSeminario() {
                     <div className="t-class-header">
                       <h5 className="t-class-title">No hay clases programadas</h5>
                     </div>
-                    <p className="t-text-muted">No tienes clases programadas próximamente.</p>
-                    
-                    <button className="t-class-link" onClick={() => { resetForms(); setModalClase(true); }}>
-                      <i className="fas fa-plus"></i> Programar una clase
-                    </button>
+                    <p className="t-text-muted t-mb-0">No tienes clases programadas próximamente.</p>
                   </div>
                 )}
 
@@ -335,7 +491,7 @@ export default function TutorSeminario() {
                     <button className="t-btn t-btn-block" onClick={() => { resetForms(); setModalClase(true); }}>
                       <i className="fas fa-video"></i> Programar Clase
                     </button>
-                    <button className="t-btn t-btn-block" onClick={() => { resetForms(); setModalMaterial(true); }}>
+                    <button className="t-btn t-btn-block" onClick={() => { setSeccion('materiales'); window.scrollTo(0,0); }}>
                       <i className="fas fa-book"></i> Compartir Material
                     </button>
                   </div>
@@ -372,6 +528,13 @@ export default function TutorSeminario() {
                   <p>Actividades Vencidas</p>
                 </div>
               </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ margin: 0, color: '#333' }}>Gestión de Actividades</h2>
+              <button className="t-btn t-btn-sm" onClick={() => { resetForms(); setEditando(null); setModalActividad(true); }}>
+                <i className="fas fa-plus t-mr-2"></i>Nueva Actividad
+              </button>
             </div>
 
             <div className="t-filter-tabs">
@@ -437,12 +600,16 @@ export default function TutorSeminario() {
                         ) : (
                           <>
                             <div className="t-activity-actions-flex">
-                              <button className="t-btn t-btn-info t-btn-sm" onClick={() => alert('Ver Detalles: ' + act.id)}>
+                              <button className="t-btn t-btn-info t-btn-sm" onClick={() => abrirEntregas(act.id)}>
                                 <i className="fas fa-eye t-mr-1"></i> Ver Detalles
                               </button>
                               
-                              <button className="t-btn t-btn-success t-btn-sm" onClick={() => alert('Calificar: ' + act.id)}>
-                                <i className="fas fa-check-circle t-mr-1"></i> Calificar / Entregas
+                              <button className="t-btn t-btn-warning t-btn-sm" onClick={() => editarActividad(act)} title="Editar actividad">
+                                <i className="fas fa-edit"></i>
+                              </button>
+
+                              <button className="t-btn t-btn-danger t-btn-sm" onClick={() => eliminarActividad(act.id)} title="Eliminar actividad">
+                                <i className="fas fa-trash"></i>
                               </button>
                             </div>
                             
@@ -492,11 +659,8 @@ export default function TutorSeminario() {
                         </a>
                       </div>
                     ) : (
-                      <div className="t-text-center">
-                        <p className="t-text-muted">No hay clases programadas próximamente.</p>
-                        <button className="t-btn t-btn-sm t-mt-3" onClick={() => { resetForms(); setModalClase(true); }}>
-                          <i className="fas fa-plus-circle t-mr-1"></i> Programar Clase
-                        </button>
+                      <div className="t-text-center t-py-3">
+                        <p className="t-text-muted t-mb-0">No hay clases programadas próximamente.</p>
                       </div>
                     )}
                   </div>
@@ -555,10 +719,10 @@ export default function TutorSeminario() {
                                 <a href={clase.enlace} target="_blank" rel="noreferrer" className="t-btn t-btn-sm">
                                   <i className="fas fa-sign-in-alt t-mr-1"></i> Iniciar
                                 </a>
-                                <button className="t-btn t-btn-warning t-btn-sm" onClick={() => alert('Editar: ' + clase.id)}>
+                                <button className="t-btn t-btn-warning t-btn-sm" onClick={() => editarClase(clase)}>
                                   <i className="fas fa-edit"></i>
                                 </button>
-                                <button className="t-btn t-btn-danger t-btn-sm" onClick={() => alert('Eliminar: ' + clase.id)}>
+                                <button className="t-btn t-btn-danger t-btn-sm" onClick={() => eliminarClase(clase.id)}>
                                   <i className="fas fa-trash"></i>
                                 </button>
                                 {clase.url_grabacion ? (
@@ -618,10 +782,10 @@ export default function TutorSeminario() {
                                 <a href={grab.url_grabacion} target="_blank" rel="noreferrer" className="t-btn t-btn-info t-btn-sm">
                                   <i className="fas fa-play-circle"></i>
                                 </a>
-                                <button className="t-btn t-btn-warning t-btn-sm" onClick={() => alert('Editar grab: ' + grab.id)}>
+                                <button className="t-btn t-btn-warning t-btn-sm" onClick={() => editarGrabacion(grab)}>
                                   <i className="fas fa-edit"></i>
                                 </button>
-                                <button className="t-btn t-btn-danger t-btn-sm" onClick={() => alert('Eliminar grab: ' + grab.id)}>
+                                <button className="t-btn t-btn-danger t-btn-sm" onClick={() => eliminarGrabacion(grab.id)}>
                                   <i className="fas fa-trash"></i>
                                 </button>
                               </div>
@@ -832,7 +996,7 @@ export default function TutorSeminario() {
                 <div className="t-form-row">
                   <div className="t-form-group">
                     <label>Fecha Límite *</label>
-                    <input type="date" required value={formActividad.fecha_limite} onChange={e => setFormActividad({...formActividad, fecha_limite: e.target.value})} />
+                    <input type="date" required value={formActividad.fecha_limite} min={!editando ? new Date().toISOString().split('T')[0] : undefined} onChange={e => setFormActividad({...formActividad, fecha_limite: e.target.value})} />
                   </div>
                   <div className="t-form-group">
                     <label>Hora Límite</label>
@@ -852,13 +1016,42 @@ export default function TutorSeminario() {
                   </div>
                   <div className="t-form-group">
                     <label>Puntaje</label>
-                    <input type="number" min="0" max="10" value={formActividad.puntaje} onChange={e => setFormActividad({...formActividad, puntaje: e.target.value})} />
+                    <input type="number" min="0" max="5" step="0.1" value={formActividad.puntaje} onChange={e => setFormActividad({...formActividad, puntaje: e.target.value})} />
                   </div>
+                </div>
+
+                <div className="t-form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                  <input type="checkbox" id="permitirEntregas" checked={formActividad.permitir_entregas_tarde} onChange={e => setFormActividad({...formActividad, permitir_entregas_tarde: e.target.checked})} style={{ width: 'auto', margin: 0 }} />
+                  <label htmlFor="permitirEntregas" style={{ marginBottom: 0, fontWeight: 'normal', cursor: 'pointer' }}>Permitir entregas después de la fecha límite (con penalización)</label>
+                </div>
+
+                <div className="t-form-group">
+                  <label>Archivos adjuntos (opcional)</label>
+                  <div className="t-file-upload-wrapper" style={{ border: '2px dashed #ddd', borderRadius: '8px', padding: '20px', textAlign: 'center', cursor: 'pointer', background: '#f8f9fa' }} onClick={() => document.getElementById('adjuntos-actividad').click()}>
+                    <i className="fas fa-cloud-upload-alt fa-2x t-mb-2" style={{ color: '#6c757d', marginBottom: '10px' }}></i>
+                    <p style={{ margin: 0, color: '#495057' }}>Haz clic para seleccionar archivos</p>
+                    <small style={{ color: '#6c757d' }}>PDF, DOCX, PPTX, XLSX, ZIP</small>
+                    <input type="file" id="adjuntos-actividad" multiple style={{ display: 'none' }} onChange={e => setFormActividad({...formActividad, archivos: Array.from(e.target.files)})} />
+                  </div>
+                  {formActividad.archivos.length > 0 && (
+                    <div style={{ marginTop: '10px' }}>
+                      <p style={{ margin: '0 0 5px 0', fontSize: '0.9em', fontWeight: 'bold' }}>Archivos seleccionados:</p>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {formActividad.archivos.map((file, i) => (
+                          <li key={i} style={{ fontSize: '0.85em', color: '#495057', display: 'flex', alignItems: 'center' }}>
+                            <i className="fas fa-file t-mr-2" style={{ marginRight: '8px' }}></i> {file.name}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="t-modal-footer">
                 <button type="button" className="t-btn-cancel" onClick={() => setModalActividad(false)}>Cancelar</button>
-                <button type="submit" className="t-btn-save">Guardar Actividad</button>
+                <button type="submit" className="t-btn-save" disabled={guardando}>
+                  {guardando ? 'Guardando...' : 'Guardar Actividad'}
+                </button>
               </div>
             </form>
           </div>
@@ -900,8 +1093,8 @@ export default function TutorSeminario() {
                     </select>
                   </div>
                   <div className="t-form-group">
-                    <label>Duración (min)</label>
-                    <input type="number" min="30" value={formClase.duracion} onChange={e => setFormClase({...formClase, duracion: e.target.value})} />
+                    <label>Duración (min) *</label>
+                    <input type="number" min="15" required value={formClase.duracion} onChange={e => setFormClase({...formClase, duracion: e.target.value})} />
                   </div>
                 </div>
                 <div className="t-form-group">
@@ -918,46 +1111,7 @@ export default function TutorSeminario() {
         </div>
       )}
 
-      {/* ─── MODAL: Subir Material ──────────────────────────── */}
-      {modalMaterial && (
-        <div className="t-modal-overlay">
-          <div className="t-modal-content">
-            <div className="t-modal-header">
-              <h2><i className="fas fa-book"></i> Compartir Material</h2>
-              <button className="t-modal-close" onClick={() => setModalMaterial(false)}>×</button>
-            </div>
-            <form onSubmit={submitMaterial}>
-              <div className="t-modal-body">
-                <div className="t-form-group">
-                  <label>Título *</label>
-                  <input required value={formMaterial.titulo} onChange={e => setFormMaterial({...formMaterial, titulo: e.target.value})} />
-                </div>
-                <div className="t-form-group">
-                  <label>Descripción</label>
-                  <textarea rows="3" value={formMaterial.descripcion} onChange={e => setFormMaterial({...formMaterial, descripcion: e.target.value})}></textarea>
-                </div>
-                <div className="t-form-group">
-                  <label>Tipo</label>
-                  <select value={formMaterial.tipo} onChange={e => setFormMaterial({...formMaterial, tipo: e.target.value})}>
-                    <option value="documento">Documento</option>
-                    <option value="video">Video</option>
-                    <option value="enlace">Enlace</option>
-                    <option value="presentacion">Presentación</option>
-                  </select>
-                </div>
-                <div className="t-form-group">
-                  <label>Archivos</label>
-                  <input type="file" multiple onChange={e => setFormMaterial({...formMaterial, archivos: Array.from(e.target.files)})} />
-                </div>
-              </div>
-              <div className="t-modal-footer">
-                <button type="button" className="t-btn-cancel" onClick={() => setModalMaterial(false)}>Cancelar</button>
-                <button type="submit" className="t-btn-save">Compartir</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+
 
       {/* ─── MODAL: Subir Grabación ─────────────────────────── */}
       {modalGrabacion && (
@@ -967,7 +1121,7 @@ export default function TutorSeminario() {
               <h2><i className="fas fa-film"></i> Subir Grabación</h2>
               <button className="t-modal-close" onClick={() => setModalGrabacion(false)}>×</button>
             </div>
-            <form onSubmit={(e) => { e.preventDefault(); alert('Grabación guardada'); setModalGrabacion(false); }}>
+            <form onSubmit={submitGrabacion}>
               <div className="t-modal-body">
                 {!formGrabacion.clase_id && (
                   <div className="t-form-group">
@@ -993,6 +1147,153 @@ export default function TutorSeminario() {
                 <button type="submit" className="t-btn-save">Subir Grabación</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL: Entregas y Calificaciones ──────────────── */}
+      {modalEntregas && (
+        <div className="t-modal-overlay">
+          <div className="t-modal-content t-modal-large">
+            <div className="t-modal-header">
+              <h2>
+                <i className="fas fa-tasks"></i> Detalles de Actividad: {actividadSeleccionada?.titulo}
+              </h2>
+              <button className="t-modal-close" onClick={() => setModalEntregas(false)}>×</button>
+            </div>
+            
+            <div className="t-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Sección de Descripción */}
+              <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #e9ecef' }}>
+                <h4 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: '#495057' }}><i className="fas fa-align-left"></i> Descripción</h4>
+                <p style={{ margin: 0, fontSize: '0.95rem', color: '#6c757d' }}>{actividadSeleccionada?.descripcion || 'Sin descripción.'}</p>
+              </div>
+
+              {/* Sección de Archivos Adjuntos */}
+              {actividadSeleccionada?.archivos && actividadSeleccionada.archivos.length > 0 && (
+                <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #e9ecef' }}>
+                  <h4 style={{ margin: '0 0 10px 0', fontSize: '1rem', color: '#495057' }}><i className="fas fa-paperclip"></i> Archivos Adjuntos</h4>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    {actividadSeleccionada.archivos.map(archivo => (
+                      <li key={archivo.id}>
+                        <a href={`http://localhost:8000/storage/${archivo.ruta_archivo}`} target="_blank" rel="noreferrer" className="t-btn t-btn-sm t-btn-outline-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                          <i className="fas fa-file-download"></i> {archivo.nombre_archivo}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Sección de Entregas */}
+              <div style={{ background: '#fff', padding: '15px', borderRadius: '8px', border: '1px solid #e9ecef' }}>
+                <h4 style={{ margin: '0 0 15px 0', fontSize: '1rem', color: '#495057', borderBottom: '2px solid #0056b3', paddingBottom: '5px', display: 'inline-block' }}>
+                  <i className="fas fa-inbox"></i> Entregas de Estudiantes
+                </h4>
+                {entregas.length > 0 ? (
+                  <div className="t-table-responsive">
+                  <table className="t-table">
+                    <thead>
+                      <tr>
+                        <th>Estudiante</th>
+                        <th>Fecha Entrega</th>
+                        <th>Archivos</th>
+                        <th>Calificación (0-5)</th>
+                        <th>Comentario</th>
+                        <th>Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {entregas.map(ent => (
+                        <tr key={ent.id}>
+                          <td>
+                            <div className="t-student-info">
+                              <strong>{ent.estudiante?.nombre}</strong>
+                              <span className="t-student-email">{ent.estudiante?.email}</span>
+                              {ent.comentario && (
+                                <div style={{ marginTop: '8px', padding: '8px', background: '#f8f9fa', borderRadius: '4px', borderLeft: '3px solid #ffc107', fontSize: '0.85rem', color: '#555' }}>
+                                  <strong>Comentario:</strong> <i>"{ent.comentario}"</i>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td>{fmtD(ent.created_at)}</td>
+                          <td>
+                            <div className="t-delivery-files" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                              {ent.archivos?.length > 0 ? ent.archivos.map(file => (
+                                <a 
+                                  key={file.id} 
+                                  href={`http://localhost:8000/storage/${file.ruta_archivo}`} 
+                                  target="_blank" 
+                                  rel="noreferrer"
+                                  className="t-btn t-btn-sm t-btn-outline-primary"
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', padding: '4px 8px' }}
+                                >
+                                  <i className="fas fa-file-download"></i> {file.nombre_archivo}
+                                </a>
+                              )) : <span className="t-text-muted" style={{ fontSize: '0.85rem' }}>Sin adjuntos</span>}
+                            </div>
+                          </td>
+                          <td>
+                            {ent.estado === 'calificado' ? (
+                              <span className="t-grade-display">{ent.calificacion}</span>
+                            ) : (
+                              <input 
+                                type="number" 
+                                min="0" 
+                                max="5" 
+                                step="0.1"
+                                className="t-grade-input"
+                                value={ent.nuevaCalificacion || ''} 
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setEntregas(prev => prev.map(item => item.id === ent.id ? { ...item, nuevaCalificacion: val } : item));
+                                }}
+                              />
+                            )}
+                          </td>
+                          <td>
+                            {ent.estado === 'calificado' ? (
+                              <p className="t-comment-display">{ent.comentario_tutor || '—'}</p>
+                            ) : (
+                              <textarea 
+                                className="t-comment-input"
+                                value={ent.nuevoComentario || ''} 
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setEntregas(prev => prev.map(item => item.id === ent.id ? { ...item, nuevoComentario: val } : item));
+                                }}
+                              />
+                            )}
+                          </td>
+                          <td>
+                            {ent.estado === 'calificado' ? (
+                              <span className="t-badge t-badge-success">Calificado</span>
+                            ) : (
+                              <button 
+                                className="t-btn t-btn-sm t-btn-success"
+                                onClick={() => submitCalificar(ent.id, ent.nuevaCalificacion, ent.nuevoComentario)}
+                              >
+                                Guardar
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="t-text-center t-py-4">
+                  <i className="fas fa-inbox fa-3x t-mb-3" style={{ color: '#dee2e6' }}></i>
+                  <p className="t-text-muted">Aún no hay entregas para esta actividad.</p>
+                </div>
+              )}
+              </div>
+            </div>
+            <div className="t-modal-footer">
+              <button className="t-btn-cancel" onClick={() => setModalEntregas(false)}>Cerrar</button>
+            </div>
           </div>
         </div>
       )}

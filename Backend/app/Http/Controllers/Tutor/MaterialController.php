@@ -9,16 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Controlador de Material de Apoyo para el rol Tutor.
- * Permite subir, listar y eliminar recursos para los estudiantes.
- */
-class MaterialApoyoController extends Controller
+class MaterialController extends Controller
 {
-    /**
-     * Lista todos los materiales de un seminario.
-     * Incluye los archivos descargables de cada material.
-     */
     public function index($seminario_id)
     {
         $materiales = MaterialApoyo::with('archivos')
@@ -29,20 +21,16 @@ class MaterialApoyoController extends Controller
         return response()->json(['data' => $materiales]);
     }
 
-    /**
-     * Crea un nuevo material con sus archivos adjuntos.
-     */
     public function store(Request $request, $seminario_id)
     {
         $request->validate([
             'titulo'        => 'required|string|max:255',
             'descripcion'   => 'nullable|string',
-            'tipo'          => 'required|in:video,documento,otro,video_links,enlace,presentacion',
-            'plataforma'    => 'nullable|string|max:100',
+            'tipo'          => 'required|in:video_links,documentation,tools,other',
+            'plataforma'    => 'nullable|string',
             'enlace'        => 'nullable|url',
             'thumbnail_url' => 'nullable|url',
-            'estudiante_id' => 'nullable|exists:users,id',
-            'archivos.*'    => 'nullable|file|max:20480', // Máx 20MB
+            'archivos.*'    => 'nullable|file|max:10240',
         ]);
 
         $material = MaterialApoyo::create([
@@ -56,17 +44,6 @@ class MaterialApoyoController extends Controller
             'thumbnail_url' => $request->thumbnail_url,
         ]);
 
-        // Crear asignación específica si se seleccionó un estudiante
-        if ($request->filled('estudiante_id')) {
-            \Illuminate\Support\Facades\DB::table('asignaciones_material')->insert([
-                'material_id'   => $material->id,
-                'estudiante_id' => $request->estudiante_id,
-                'created_at'    => now(),
-                'updated_at'    => now(),
-            ]);
-        }
-
-        // Procesar y guardar cada archivo adjunto
         if ($request->hasFile('archivos')) {
             foreach ($request->file('archivos') as $archivo) {
                 $ruta = $archivo->store("materiales/{$material->id}", 'public');
@@ -80,27 +57,21 @@ class MaterialApoyoController extends Controller
             }
         }
 
-        return response()->json(['message' => 'Material creado exitosamente.', 'data' => $material->load('archivos')], 201);
+        return response()->json(['message' => 'Material compartido exitosamente.', 'data' => $material->load('archivos')], 201);
     }
 
-    /**
-     * Elimina un material y todos sus archivos físicos del storage.
-     */
-    public function destroy($seminario_id, $material_id)
+    public function destroy($seminario_id, $id)
     {
-        $material = MaterialApoyo::with('archivos')
-            ->where('id', $material_id)
+        $material = MaterialApoyo::where('id', $id)
             ->where('seminario_id', $seminario_id)
-            ->where('creado_por', Auth::id())
             ->firstOrFail();
 
-        // Eliminar archivos físicos del disco
         foreach ($material->archivos as $archivo) {
             Storage::disk('public')->delete($archivo->ruta_archivo);
         }
 
         $material->delete();
 
-        return response()->json(['message' => 'Material eliminado exitosamente.']);
+        return response()->json(['message' => 'Material eliminado.']);
     }
 }

@@ -123,4 +123,17 @@ class SeminarioDashboardController extends Controller
             'proxima_clase' => $proxima_clase,
         ]);
     }
+    /**
+     * Retorna la lista de seminarios en los que el estudiante está inscrito.
+     */
+    public function misSeminarios()
+    {
+        $inscripciones = InscripcionSeminario::with('seminario.tutor')
+            ->where('estudiante_id', Auth::id())
+            ->get();
+
+        return response()->json([
+            'data' => $inscripciones
+        ]);
+    }
 }

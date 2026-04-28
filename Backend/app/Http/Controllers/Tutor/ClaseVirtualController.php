@@ -74,4 +74,41 @@ class ClaseVirtualController extends Controller
 
         return response()->json(['message' => 'Clase virtual eliminada.']);
     }
+
+    /** Sube la URL de la grabación de una clase virtual */
+    public function uploadGrabacion(Request $request, $seminario_id, $clase_id)
+    {
+        $request->validate([
+            'url_grabacion' => 'required|url',
+        ]);
+
+        $clase = ClaseVirtual::where('id', $clase_id)
+            ->where('seminario_id', $seminario_id)
+            ->where('tutor_id', Auth::id())
+            ->firstOrFail();
+
+        $clase->url_grabacion = $request->url_grabacion;
+
+        if ($request->filled('descripcion')) {
+            $clase->descripcion = $clase->descripcion . "\n\nNotas de grabación: " . $request->descripcion;
+        }
+
+        $clase->save();
+
+        return response()->json(['message' => 'Grabación guardada.', 'data' => $clase]);
+    }
+
+    /** Elimina la URL de la grabación de una clase virtual */
+    public function destroyGrabacion($seminario_id, $clase_id)
+    {
+        $clase = ClaseVirtual::where('id', $clase_id)
+            ->where('seminario_id', $seminario_id)
+            ->where('tutor_id', Auth::id())
+            ->firstOrFail();
+
+        $clase->url_grabacion = null;
+        $clase->save();
+
+        return response()->json(['message' => 'Grabación eliminada.']);
+    }
 }

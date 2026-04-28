@@ -49,6 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Panel de control inicial del tutor
         Route::get('/dashboard', [App\Http\Controllers\Tutor\SeminarioDashboardController::class, 'dashboard']);
+        Route::get('/estudiantes', [App\Http\Controllers\Tutor\SeminarioDashboardController::class, 'estudiantes']);
 
         // Actividades (CRUD completo)
         Route::get('/actividades',          [App\Http\Controllers\Tutor\ActividadController::class, 'index']);
@@ -58,39 +59,37 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/actividades/{act_id}', [App\Http\Controllers\Tutor\ActividadController::class, 'destroy']);
 
         // Entregas de los estudiantes + calificación
-        Route::get('/actividades/{act_id}/entregas',                  [App\Http\Controllers\Tutor\EntregaController::class, 'index']);
+        Route::get('/actividades/{act_id}/entregas', [App\Http\Controllers\Tutor\EntregaController::class, 'index']);
         Route::post('/actividades/{act_id}/entregas/{entrega_id}/calificar', [App\Http\Controllers\Tutor\EntregaController::class, 'calificar']);
+
+        // Materiales de Apoyo
+        Route::get('/materiales', [App\Http\Controllers\Tutor\MaterialController::class, 'index']);
+        Route::post('/materiales', [App\Http\Controllers\Tutor\MaterialController::class, 'store']);
+        Route::delete('/materiales/{id}', [App\Http\Controllers\Tutor\MaterialController::class, 'destroy']);
+
+        // Lista de estudiantes inscritos
+        Route::get('/estudiantes', [App\Http\Controllers\Tutor\SeminarioDashboardController::class, 'estudiantes']);
 
         // Clases virtuales (CRUD)
         Route::get('/clases',          [App\Http\Controllers\Tutor\ClaseVirtualController::class, 'index']);
         Route::post('/clases',         [App\Http\Controllers\Tutor\ClaseVirtualController::class, 'store']);
         Route::put('/clases/{cls_id}', [App\Http\Controllers\Tutor\ClaseVirtualController::class, 'update']);
         Route::delete('/clases/{cls_id}', [App\Http\Controllers\Tutor\ClaseVirtualController::class, 'destroy']);
-
-        // Materiales de apoyo (CRUD)
-        Route::get('/materiales',          [App\Http\Controllers\Tutor\MaterialApoyoController::class, 'index']);
-        Route::post('/materiales',         [App\Http\Controllers\Tutor\MaterialApoyoController::class, 'store']);
-        Route::delete('/materiales/{mat_id}', [App\Http\Controllers\Tutor\MaterialApoyoController::class, 'destroy']);
+        Route::post('/clases/{cls_id}/grabacion', [App\Http\Controllers\Tutor\ClaseVirtualController::class, 'uploadGrabacion']);
+        Route::delete('/clases/{cls_id}/grabacion', [App\Http\Controllers\Tutor\ClaseVirtualController::class, 'destroyGrabacion']);
     });
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // ── ESTUDIANTE: Dashboard del seminario ───────────────────────────────────
-    // ─────────────────────────────────────────────────────────────────────────
-    Route::prefix('estudiante/seminarios/{seminario_id}')->group(function () {
+        // --- Estudiante ---
+        Route::prefix('estudiante/seminarios/{seminario_id}')->group(function () {
+            Route::get('/dashboard', [App\Http\Controllers\Estudiante\SeminarioDashboardController::class, 'dashboard']);
+            Route::get('/clases',    [App\Http\Controllers\Estudiante\SeminarioDashboardController::class, 'clases']);
+            Route::get('/actividades', [App\Http\Controllers\Estudiante\ActividadController::class, 'index']);
+            Route::post('/actividades/{act_id}/entregar', [App\Http\Controllers\Estudiante\ActividadController::class, 'store']);
+            
+            // Materiales de Apoyo
+            Route::get('/materiales', [App\Http\Controllers\Estudiante\MaterialController::class, 'index']);
+        });
 
-        // Información del seminario + estadísticas del estudiante
-        Route::get('/dashboard',  [App\Http\Controllers\Estudiante\SeminarioDashboardController::class, 'dashboard']);
-        Route::get('/info',       [App\Http\Controllers\Estudiante\SeminarioDashboardController::class, 'mySeminario']);
-
-        // Ver actividades y entregar tareas
-        Route::get('/actividades',            [App\Http\Controllers\Estudiante\ActividadController::class, 'index']);
-        Route::post('/actividades/{act_id}/entregar', [App\Http\Controllers\Estudiante\ActividadController::class, 'store']);
-
-        // Clases virtuales (solo lectura)
-        Route::get('/clases',     [App\Http\Controllers\Estudiante\SeminarioDashboardController::class, 'clases']);
-
-        // Materiales de apoyo (solo lectura)
-        Route::get('/materiales', [App\Http\Controllers\Estudiante\SeminarioDashboardController::class, 'materiales']);
-    });
+    Route::get('/estudiante/mis-seminarios', [App\Http\Controllers\Estudiante\SeminarioDashboardController::class, 'misSeminarios']);
 
 });

@@ -35,7 +35,7 @@ const formatearFechaCorta = (dateStr) => {
 export default function EstudianteSeminario() {
   const navigate = useNavigate();
 
-  const seminarioId = localStorage.getItem('seminario_id') || 1;
+  const [seminarioId, setSeminarioId] = useState(localStorage.getItem('seminario_id'));
   const userName = localStorage.getItem('user_name') || 'Estudiante';
   const [userAvatar, setUserAvatar] = useState(localStorage.getItem('user_avatar') || 'https://randomuser.me/api/portraits/men/32.jpg');
 
@@ -51,11 +51,13 @@ export default function EstudianteSeminario() {
   const [clases, setClases] = useState([]);
   const [materiales, setMateriales] = useState([]);
 
-  // Variables calculadas (simulando backend de progreso)
-  const promedio = isNaN(parseFloat(stats?.promedio)) ? 0 : parseFloat(stats?.promedio);
-  const porcentajeProgreso = Math.round(promedio * 20); // de 0-5 a 0-100%
-  const actividadesCalificadas = stats?.calificadas || 0;
-  const totalActividades = actividades.length > 0 ? (actividades.length + actividadesCalificadas) : 4; // Mock
+  // Variables calculadas (Progreso real basado en estado de tareas)
+  const actPendientesCount = stats?.pendientes || 0;
+  const actEntregadasCount = stats?.entregadas || 0;
+  const actCalificadasCount = stats?.calificadas || 0;
+  const totalActividades = actPendientesCount + actEntregadasCount + actCalificadasCount;
+  const actividadesCompletadas = actEntregadasCount + actCalificadasCount;
+  const porcentajeProgreso = totalActividades === 0 ? 0 : Math.round((actividadesCompletadas / totalActividades) * 100);
 
   const [modalEntrega, setModalEntrega] = useState(null);
   const [formEntrega, setFormEntrega] = useState({ comentario: '', archivos: [] });
@@ -66,35 +68,50 @@ export default function EstudianteSeminario() {
   const [modalAvatar, setModalAvatar] = useState(false);
 
   const cargarDashboard = useCallback(async () => {
+    if (!seminarioId) return;
     setLoading(true);
     try {
       const { data } = await api.get(`/estudiante/seminarios/${seminarioId}/dashboard`);
       setStats(data.stats);
       setProximaClase(data.proxima_clase);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) { 
+      console.error(err); 
+      if (err.response?.status === 404) {
+        buscarMiSeminario();
+      }
+    }
   }, [seminarioId]);
 
+  const buscarMiSeminario = async () => {
+    try {
+      const { data } = await api.get('/estudiante/mis-seminarios');
+      if (data.data && data.data.length > 0) {
+        const id = data.data[0].seminario_id;
+        localStorage.setItem('seminario_id', id);
+        setSeminarioId(id);
+      } else {
+        alert('No estás inscrito en ningún seminario aún.');
+      }
+    } catch (err) {
+      console.error('Error buscando seminarios:', err);
+    }
+  };
+
   const cargarActividades = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await api.get(`/estudiante/seminarios/${seminarioId}/actividades?filtro=${filtro}`);
       setActividades(data.data || []);
     } catch (err) { console.error(err); }
-    finally { setLoading(false); }
   }, [seminarioId, filtro]);
 
   const cargarClases = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await api.get(`/estudiante/seminarios/${seminarioId}/clases`);
       setClases(data.data || []);
     } catch (err) { console.error(err); }
-    finally { setLoading(false); }
   }, [seminarioId]);
 
   const cargarMateriales = useCallback(async () => {
-    setLoading(true);
     try {
       const { data } = await api.get(`/estudiante/seminarios/${seminarioId}/materiales`);
       setMateriales(data.data || []);
@@ -103,17 +120,23 @@ export default function EstudianteSeminario() {
   }, [seminarioId]);
 
   useEffect(() => {
+    if (!seminarioId) {
+      buscarMiSeminario();
+      return;
+    }
+
     if (seccion === 'inicio') cargarDashboard();
     else if (seccion === 'actividades') cargarActividades();
     else if (seccion === 'clases') cargarClases();
     else if (seccion === 'materiales') cargarMateriales();
-  }, [seccion, filtro, cargarDashboard, cargarActividades, cargarClases, cargarMateriales]);
+  }, [seccion, filtro, seminarioId, cargarDashboard, cargarActividades, cargarClases, cargarMateriales]);
 
-  const submitEntrega = async (e) => {
+    const submitEntrega = async (e) => {
     e.preventDefault();
     setEnviando(true);
     const fd = new FormData();
     fd.append('comentario', formEntrega.comentario);
+    fd.append('has_files', formEntrega.archivos.length > 0 ? '1' : '0');
     formEntrega.archivos.forEach((f) => fd.append('archivos[]', f));
     try {
       await api.post(`/estudiante/seminarios/${seminarioId}/actividades/${modalEntrega.id}/entregar`, fd);
@@ -123,7 +146,13 @@ export default function EstudianteSeminario() {
       if (seccion === 'actividades') cargarActividades();
       else cargarDashboard();
     } catch (err) {
-      alert('Error en la entrega.');
+      console.error(err);
+      const errors = err.response?.data?.errors;
+      if (errors) {
+        alert('Errores de validación:\n' + Object.values(errors).flat().join('\n'));
+      } else {
+        alert(err.response?.data?.message || 'Error en la entrega.');
+      }
     } finally { setEnviando(false); }
   };
 
@@ -229,7 +258,7 @@ export default function EstudianteSeminario() {
                 <div className="progress-bar" role="progressbar" style={{ width: `${porcentajeProgreso}%` }}></div>
               </div>
               <div className="progress-details">
-                <span>{actividadesCalificadas} de {totalActividades} actividades calificadas</span>
+                <span>{actividadesCompletadas} de {totalActividades} actividades entregadas</span>
                 <a onClick={() => setSeccion('actividades')} style={{ cursor: 'pointer' }}>Ver detalles</a>
               </div>
             </section>
@@ -400,8 +429,17 @@ export default function EstudianteSeminario() {
                           <span style={{ marginLeft: 10, fontWeight: 'bold' }}>{act.puntaje} Pts</span>
                         </div>
                       </div>
-                      {!act.mi_entrega && <a className="btn btn-sm btn-primary" style={{ color: 'white' }} onClick={() => setModalEntrega(act)}>Entregar</a>}
-                      {act.mi_entrega && <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>{act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}</span>}
+                      <div className="activity-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
+                        {act.mi_entrega ? (
+                          <span className={`activity-status ${act.mi_entrega.estado === 'pendiente' ? 'status-submitted' : 'status-graded'}`}>
+                            {act.mi_entrega.estado === 'pendiente' ? 'Entregada' : `Calificada: ${act.mi_entrega.calificacion}`}
+                          </span>
+                        ) : null}
+                        <button className="btn btn-sm btn-primary" onClick={() => setModalEntrega(act)}>
+                          <i className={`fas ${!act.mi_entrega ? 'fa-paper-plane' : 'fa-eye'}`} style={{ marginRight: '5px' }}></i>
+                          {!act.mi_entrega ? 'Entregar' : 'Ver Detalles'}
+                        </button>
+                      </div>
                     </li>
                   )) : (
                     <div className="empty-state" style={{ boxShadow: 'none' }}>
@@ -433,7 +471,7 @@ export default function EstudianteSeminario() {
 
               {seccion === 'clases' && (
                 <>
-                  {clases.length === 0 ? (
+                  {clases.filter(c => c.url_grabacion).length === 0 ? (
                     <div className="empty-state" style={{ boxShadow: 'none' }}>
                       <i className="fas fa-video-slash"></i>
                       <h3>No hay grabaciones disponibles</h3>
@@ -441,15 +479,15 @@ export default function EstudianteSeminario() {
                     </div>
                   ) : (
                     <div className="recordings-grid">
-                      {clases.map(clase => {
-                        const videoId = clase.enlace.includes('youtube.com') || clase.enlace.includes('youtu.be')
-                          ? clase.enlace.split('v=')[1]?.split('&')[0] || clase.enlace.split('/').pop()
+                      {clases.filter(c => c.url_grabacion).map(clase => {
+                        const videoId = clase.url_grabacion.includes('youtube.com') || clase.url_grabacion.includes('youtu.be')
+                          ? clase.url_grabacion.split('v=')[1]?.split('&')[0] || clase.url_grabacion.split('/').pop()
                           : null;
                         const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : '/IMG/video-placeholder.jpg';
 
                         return (
                           <div className="recording-card" key={clase.id}>
-                            <div className="video-thumbnail" onClick={() => setVideoUrl(clase.enlace)}>
+                            <div className="video-thumbnail" onClick={() => setVideoUrl(clase.url_grabacion)}>
                               <img src={thumbnail} alt={clase.titulo} className="thumbnail-img" />
                               <div className="play-button"><i className="fas fa-play"></i></div>
                               <div className="video-duration">{clase.duracion} min</div>
@@ -572,28 +610,165 @@ export default function EstudianteSeminario() {
         </div>
       </footer>
 
-      {/* ─── MODAL ENTREGA ──────────────────────────────────── */}
+      {/* ─── MODAL ENTREGA / DETALLES ──────────────────────────────────── */}
       {modalEntrega && (
-        <div className="modal-overlay" onClick={() => setModalEntrega(null)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="card-header">
-              <h2 className="card-title">Entregar Actividad</h2>
+        <div className="modal-overlay" onClick={() => setModalEntrega(null)} style={{ zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="modal-content" style={{ maxWidth: '1000px', width: '95%', maxHeight: '90vh', overflowY: 'auto', background: '#f4f6f9', padding: '25px', borderRadius: '12px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #e9ecef', paddingBottom: '15px' }}>
+              <h2 style={{ margin: 0, fontSize: '1.8rem', color: '#333' }}>
+                <i className="fas fa-clipboard-list" style={{ marginRight: '10px', color: '#0056b3' }}></i>
+                {modalEntrega.mi_entrega ? 'Detalles de la Entrega' : 'Entregar Actividad'}
+              </h2>
+              <button onClick={() => setModalEntrega(null)} style={{ background: 'none', border: 'none', fontSize: '2rem', cursor: 'pointer', color: '#6c757d' }}>&times;</button>
             </div>
-            <form onSubmit={submitEntrega} style={{ marginTop: 20 }}>
-              <p><strong>{modalEntrega.titulo}</strong></p>
-              <div className="form-group">
-                <label>Comentario (opcional)</label>
-                <textarea rows="3" value={formEntrega.comentario} onChange={e => setFormEntrega({ ...formEntrega, comentario: e.target.value })} />
+
+            <div style={{ display: 'flex', gap: '25px', flexWrap: 'wrap' }}>
+              {/* Columna Principal */}
+              <div style={{ flex: '1 1 600px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                
+                {/* Info Actividad */}
+                <div style={{ background: '#fff', padding: '25px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e9ecef' }}>
+                  <h4 style={{ color: '#0056b3', borderBottom: '1px solid #eee', paddingBottom: '10px', marginTop: 0 }}>
+                    <i className="fas fa-info-circle"></i> Información de la Actividad
+                  </h4>
+                  <h2 style={{ color: '#333', margin: '15px 0' }}>{modalEntrega.titulo}</h2>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', background: '#f8f9fa', padding: '15px', borderRadius: '6px', marginBottom: '20px' }}>
+                    <div><i className="fas fa-calendar-alt text-muted mr-1"></i> <strong>Fecha límite:</strong> {formatearFechaCorta(modalEntrega.fecha_limite)}</div>
+                    <div><i className="fas fa-clock text-muted mr-1"></i> <strong>Hora límite:</strong> {modalEntrega.hora_limite?.slice(0, 5)}</div>
+                    <div><i className="fas fa-tag text-muted mr-1"></i> <strong>Tipo:</strong> {modalEntrega.tipo}</div>
+                    <div><i className="fas fa-star text-muted mr-1"></i> <strong>Puntaje:</strong> {modalEntrega.puntaje} puntos</div>
+                  </div>
+
+                  <div style={{ marginBottom: '20px' }}>
+                    <h5 style={{ color: '#495057', marginBottom: '10px' }}>Descripción</h5>
+                    <div style={{ color: '#555', background: '#f8f9fa', padding: '15px', borderRadius: '6px', whiteSpace: 'pre-line' }}>
+                      {modalEntrega.descripcion || 'Sin descripción.'}
+                    </div>
+                  </div>
+
+                  {modalEntrega.archivos && modalEntrega.archivos.length > 0 && (
+                    <div>
+                      <h5 style={{ color: '#495057', marginBottom: '10px' }}><i className="fas fa-paperclip"></i> Archivos adjuntos del tutor</h5>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                        {modalEntrega.archivos.map(archivo => (
+                          <li key={archivo.id}>
+                            <a href={`http://localhost:8000/storage/${archivo.ruta_archivo}`} target="_blank" rel="noreferrer" className="btn btn-sm btn-outline-primary" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <i className="fas fa-file-pdf fa-lg"></i> {archivo.nombre_archivo}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Zona de Entrega */}
+                <div style={{ background: '#fff', padding: '25px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e9ecef' }}>
+                  {!modalEntrega.mi_entrega ? (
+                    <form onSubmit={submitEntrega}>
+                      <h4 style={{ color: '#0056b3', borderBottom: '1px solid #eee', paddingBottom: '10px', marginTop: 0, marginBottom: '20px' }}>
+                        <i className="fas fa-upload"></i> Tu Entrega
+                      </h4>
+                      <div className="form-group" style={{ marginBottom: '20px' }}>
+                        <label style={{ fontWeight: 'bold' }}>Comentarios (opcional)</label>
+                        <textarea className="form-control" rows="4" placeholder="Escribe aquí tus comentarios o dudas sobre la actividad..." value={formEntrega.comentario} onChange={e => setFormEntrega({ ...formEntrega, comentario: e.target.value })} style={{ width: '100%', padding: '15px', borderRadius: '6px', border: '1px solid #ced4da', resize: 'vertical' }}></textarea>
+                      </div>
+                      <div className="form-group" style={{ marginBottom: '25px' }}>
+                        <label style={{ fontWeight: 'bold' }}>Archivos adjuntos</label>
+                        <div style={{ border: '2px dashed #0056b3', padding: '30px', textAlign: 'center', borderRadius: '8px', background: '#f8f9fa', cursor: 'pointer', transition: 'all 0.3s' }} onClick={() => document.getElementById('file-upload-estudiante').click()}>
+                          <i className="fas fa-cloud-upload-alt fa-3x" style={{ color: '#0056b3', marginBottom: '15px' }}></i>
+                          <p style={{ margin: 0, color: '#495057', fontSize: '1.1rem' }}>Haz clic para seleccionar archivos</p>
+                          <small style={{ color: '#6c757d' }}>Puedes adjuntar archivos. Tamaño máximo: 10MB.</small>
+                          <input type="file" id="file-upload-estudiante" multiple onChange={e => setFormEntrega({ ...formEntrega, archivos: Array.from(e.target.files) })} style={{ display: 'none' }} />
+                        </div>
+                        {formEntrega.archivos.length > 0 && (
+                          <div style={{ marginTop: '15px', background: '#e9ecef', padding: '15px', borderRadius: '6px' }}>
+                            <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', color: '#495057' }}>Archivos seleccionados:</p>
+                            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                              {formEntrega.archivos.map((file, i) => (
+                                <li key={i} style={{ padding: '5px 0', borderBottom: i !== formEntrega.archivos.length - 1 ? '1px solid #dee2e6' : 'none', color: '#333' }}>
+                                  <i className="fas fa-file mr-2" style={{ color: '#0056b3' }}></i> {file.name}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <button type="button" className="btn btn-secondary" style={{ marginRight: '10px', padding: '10px 20px' }} onClick={() => setModalEntrega(null)}>Cancelar</button>
+                        <button type="submit" className="btn btn-primary" disabled={enviando} style={{ padding: '10px 20px' }}>
+                          <i className="fas fa-paper-plane mr-2"></i> {enviando ? 'Enviando...' : 'Enviar Entrega'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div>
+                      <h4 style={{ color: '#0056b3', borderBottom: '1px solid #eee', paddingBottom: '10px', marginTop: 0, marginBottom: '20px' }}>
+                        <i className="fas fa-clipboard-check"></i> Información de la Entrega
+                      </h4>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '15px', background: '#f8f9fa', borderRadius: '6px' }}>
+                          <span style={{ fontWeight: 'bold', color: '#495057' }}>Estado:</span>
+                          {modalEntrega.mi_entrega.estado === 'calificado' ? 
+                            <span style={{ background: '#28a745', color: 'white', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold' }}>Calificada</span> : 
+                            <span style={{ background: '#ffc107', color: '#333', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold' }}>Entregada (Pendiente)</span>
+                          }
+                        </div>
+                        
+                        <div style={{ padding: '15px', background: '#f8f9fa', borderRadius: '6px' }}>
+                          <h6 style={{ margin: '0 0 10px 0', color: '#495057' }}>Tu comentario:</h6>
+                          <div style={{ color: '#555', fontStyle: modalEntrega.mi_entrega.comentario ? 'normal' : 'italic' }}>
+                            {modalEntrega.mi_entrega.comentario || 'No añadiste comentarios a esta entrega.'}
+                          </div>
+                        </div>
+
+                        {modalEntrega.mi_entrega.estado === 'calificado' && (
+                          <div style={{ padding: '20px', background: '#e8f4fd', border: '1px solid #b8daff', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', borderBottom: '1px solid #b8daff', paddingBottom: '10px' }}>
+                              <h5 style={{ margin: 0, color: '#0056b3' }}><i className="fas fa-star text-warning mr-2"></i>Calificación Final</h5>
+                              <strong style={{ fontSize: '1.4rem', color: '#0056b3' }}>{modalEntrega.mi_entrega.calificacion} / 5.0</strong>
+                            </div>
+                            <div>
+                              <h6 style={{ margin: '0 0 5px 0', color: '#495057' }}>Retroalimentación del Tutor:</h6>
+                              <p style={{ margin: 0, color: '#333' }}>{modalEntrega.mi_entrega.comentario_tutor || 'Sin comentarios adicionales.'}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="form-group">
-                <label>Archivos adjuntos</label>
-                <input type="file" multiple onChange={e => setFormEntrega({ ...formEntrega, archivos: Array.from(e.target.files) })} />
+
+              {/* Columna Consejos (Lateral) */}
+              <div style={{ flex: '1 1 300px' }}>
+                <div style={{ background: '#fff', padding: '25px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', border: '1px solid #e9ecef', position: 'sticky', top: '20px' }}>
+                  <h4 style={{ color: '#495057', borderBottom: '1px solid #eee', paddingBottom: '10px', marginTop: 0, marginBottom: '20px' }}>
+                    <i className="fas fa-lightbulb" style={{ color: '#ffc107', marginRight: '8px' }}></i> Consejos para la entrega
+                  </h4>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: '#555' }}>
+                    <li style={{ marginBottom: '15px', display: 'flex', gap: '10px' }}>
+                      <i className="fas fa-check-circle mt-1" style={{ color: '#28a745' }}></i> 
+                      <span>Asegúrate de leer detenidamente las instrucciones de la actividad.</span>
+                    </li>
+                    <li style={{ marginBottom: '15px', display: 'flex', gap: '10px' }}>
+                      <i className="fas fa-check-circle mt-1" style={{ color: '#28a745' }}></i> 
+                      <span>Verifica que los archivos que adjuntes estén en los formatos solicitados.</span>
+                    </li>
+                    <li style={{ marginBottom: '15px', display: 'flex', gap: '10px' }}>
+                      <i className="fas fa-check-circle mt-1" style={{ color: '#28a745' }}></i> 
+                      <span>Realiza la entrega con tiempo suficiente antes de la fecha límite.</span>
+                    </li>
+                    <li style={{ display: 'flex', gap: '10px' }}>
+                      <i className="fas fa-check-circle mt-1" style={{ color: '#28a745' }}></i> 
+                      <span>Si tienes dudas, puedes incluirlas en el campo de comentarios.</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
-              <div style={{ textAlign: 'right', marginTop: 15 }}>
-                <button type="button" className="btn btn-outline-primary" style={{ marginRight: 10 }} onClick={() => setModalEntrega(null)}>Cancelar</button>
-                <button type="submit" className="btn btn-primary" disabled={enviando}>{enviando ? 'Enviando...' : 'Entregar'}</button>
-              </div>
-            </form>
+
+            </div>
           </div>
         </div>
       )}

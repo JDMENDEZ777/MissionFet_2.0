@@ -23,6 +23,7 @@ class ClaseVirtual extends Model
         'duracion',
         'plataforma',
         'enlace',
+        'url_grabacion',
     ];
 
     protected $casts = [

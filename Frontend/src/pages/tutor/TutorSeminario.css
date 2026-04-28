@@ -1121,3 +1121,74 @@ html, body {
   .t-dashboard-row { flex-direction: column; }
   .t-col-aside { flex: unset; }
 }
+
+/* ── ESTILOS PARA CALIFICACIONES ───────────────────────── */
+.t-modal-large {
+  width: 95%;
+  max-width: 1000px;
+}
+
+.t-student-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.t-student-email {
+  font-size: 0.85em;
+  color: #6c757d;
+}
+
+.t-delivery-files {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.t-file-link {
+  color: var(--primary);
+  font-size: 1.2rem;
+  transition: transform 0.2s;
+}
+
+.t-file-link:hover {
+  transform: scale(1.2);
+}
+
+.t-grade-input {
+  width: 70px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.t-comment-input {
+  width: 100%;
+  min-width: 200px;
+  height: 60px;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.t-grade-display {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.t-comment-display {
+  font-size: 0.9rem;
+  color: #495057;
+  max-width: 300px;
+  white-space: pre-wrap;
+}
+
+.t-py-4 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.t-mb-3 { margin-bottom: 1rem; }
+.t-text-center { text-align: center; }
+

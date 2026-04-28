@@ -27,14 +27,17 @@ class ActividadController extends Controller
         $filtro   = $request->query('filtro', 'todas');
 
         // Consulta base: actividades de este seminario creadas por este tutor
-        $query = Actividad::with(['archivos'])
+        // Eager load de archivos y entregas para evitar N+1
+        $query = Actividad::with(['archivos', 'entregas'])
             ->where('seminario_id', $seminario_id)
             ->where('tutor_id', $tutor_id);
 
         // Aplicar filtro según pestaña seleccionada
         if ($filtro === 'pendientes') {
+            // Aún dentro del plazo
             $query->where('fecha_limite', '>=', now()->toDateString());
         } elseif ($filtro === 'vencidas') {
+            // Fuera del plazo
             $query->where('fecha_limite', '<', now()->toDateString());
         } elseif ($filtro === 'calificadas') {
             // Actividades que tienen al menos una entrega calificada
@@ -43,14 +46,18 @@ class ActividadController extends Controller
 
         $actividades = $query->latest()->get();
 
-        // Enriquecer cada actividad con sus estadísticas de entrega
+        // Enriquecer cada actividad con sus estadísticas de entrega (usando la colección ya cargada)
         $actividades = $actividades->map(function ($actividad) {
-            $actividad->total_entregas      = $actividad->entregas()->count();
-            $actividad->entregas_pendientes = $actividad->entregas()->where('estado', 'pendiente')->count();
-            $actividad->entregas_calificadas = $actividad->entregas()->where('estado', 'calificado')->count();
-            $actividad->calificacion_promedio = $actividad->entregas()
+            $actividad->total_entregas       = $actividad->entregas->count();
+            $actividad->entregas_pendientes  = $actividad->entregas->where('estado', 'pendiente')->count();
+            $actividad->entregas_calificadas = $actividad->entregas->where('estado', 'calificado')->count();
+            $actividad->calificacion_promedio = $actividad->entregas
                 ->where('estado', 'calificado')
                 ->avg('calificacion');
+            
+            // Ocultar entregas completas para no inflar la respuesta JSON
+            unset($actividad->entregas);
+            
             return $actividad;
         });
 
@@ -66,7 +73,7 @@ class ActividadController extends Controller
         $request->validate([
             'titulo'                  => 'required|string|max:255',
             'descripcion'             => 'nullable|string',
-            'fecha_limite'            => 'required|date',
+            'fecha_limite'            => 'required|date|after_or_equal:today',
             'hora_limite'             => 'required',
             'tipo'                    => 'required|in:tarea,proyecto,examen,cuestionario,investigacion',
             'puntaje'                 => 'required|numeric|min:0|max:5',
@@ -137,10 +144,16 @@ class ActividadController extends Controller
             'permitir_entregas_tarde' => 'boolean',
         ]);
 
-        $actividad->update($request->only([
+        $data = $request->only([
             'titulo', 'descripcion', 'fecha_limite', 'hora_limite',
-            'tipo', 'puntaje', 'permitir_entregas_tarde',
-        ]));
+            'tipo', 'puntaje'
+        ]);
+
+        if ($request->has('permitir_entregas_tarde')) {
+            $data['permitir_entregas_tarde'] = $request->boolean('permitir_entregas_tarde');
+        }
+
+        $actividad->update($data);
 
         return response()->json(['message' => 'Actividad actualizada.', 'data' => $actividad]);
     }

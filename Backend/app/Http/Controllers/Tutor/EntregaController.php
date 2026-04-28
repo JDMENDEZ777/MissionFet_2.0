@@ -60,12 +60,14 @@ class EntregaController extends Controller
         }
 
         $request->validate([
-            'calificacion'    => 'required|numeric|min:0|max:5',
-            'comentario_tutor' => 'nullable|string|max:1000',
+            'calificacion'     => 'required|numeric|min:0|max:5',
+            'comentario_tutor' => 'nullable|string|max:2000',
         ]);
 
+        $calificacion = floatval($request->calificacion);
+
         $entrega->update([
-            'calificacion'      => $request->calificacion,
+            'calificacion'      => $calificacion,
             'comentario_tutor'  => $request->comentario_tutor,
             'estado'            => 'calificado',
             'fecha_calificacion' => now(),

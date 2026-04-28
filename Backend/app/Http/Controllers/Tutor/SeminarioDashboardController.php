@@ -67,4 +67,19 @@ class SeminarioDashboardController extends Controller
             'ultimas_entregas' => $ultimas_entregas,
         ]);
     }
+
+    /**
+     * Retorna la lista de estudiantes inscritos en el seminario.
+     * Útil para asignar materiales de apoyo a estudiantes específicos.
+     */
+    public function estudiantes($seminario_id)
+    {
+        $estudiantes = InscripcionSeminario::with('estudiante:id,name,email,avatar')
+            ->where('seminario_id', $seminario_id)
+            ->where('estado', 'aprobado')
+            ->get()
+            ->pluck('estudiante');
+
+        return response()->json(['data' => $estudiantes]);
+    }
 }

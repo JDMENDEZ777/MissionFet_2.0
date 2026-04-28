@@ -60,17 +60,17 @@ class ActividadController extends Controller
      * El estudiante entrega una actividad con un comentario y archivos adjuntos.
      * Solo se permite una entrega por actividad (a menos que ya esté calificada).
      */
-    public function store(Request $request, $seminario_id, $actividad_id)
+    public function store(Request $request, $seminario_id, $act_id)
     {
         $estudiante_id = Auth::id();
 
         // Verificar que la actividad pertenece al seminario
-        $actividad = Actividad::where('id', $actividad_id)
+        $actividad = Actividad::where('id', $act_id)
             ->where('seminario_id', $seminario_id)
             ->firstOrFail();
 
         // Verificar que no haya entregado ya esta actividad
-        $entregaExistente = EntregaActividad::where('actividad_id', $actividad_id)
+        $entregaExistente = EntregaActividad::where('actividad_id', $act_id)
             ->where('estudiante_id', $estudiante_id)
             ->first();
 
@@ -78,27 +78,49 @@ class ActividadController extends Controller
             return response()->json(['message' => 'Ya entregaste esta actividad anteriormente.'], 409);
         }
 
-        // Verificar fecha límite (solo si no se permiten entregas tardías)
+        // Verificar fecha límite
         if (!$actividad->permitir_entregas_tarde && now()->toDateString() > $actividad->fecha_limite->toDateString()) {
             return response()->json(['message' => 'La fecha límite de entrega ya pasó.'], 403);
         }
 
         $request->validate([
-            'comentario' => 'nullable|string|max:2000',
-            'archivos.*' => 'nullable|file|max:10240',
+            'comentario' => 'nullable',
         ]);
+
+        // Si el frontend envió archivos pero PHP los descartó todos (payload vacío por post_max_size)
+        if ($request->input('has_files') === '1' && !$request->hasFile('archivos')) {
+            return response()->json([
+                'message' => 'El archivo supera el tamaño máximo global permitido por el servidor (post_max_size). Intenta con un archivo más pequeño.'
+            ], 422);
+        }
+
+        // Validación manual de archivos para evitar fallos 422 de Laravel por formato de FormData o upload_max_filesize
+        if ($request->hasFile('archivos')) {
+            $files = $request->file('archivos');
+            if (!is_array($files)) $files = [$files];
+            foreach ($files as $file) {
+                if (!$file->isValid()) {
+                    return response()->json([
+                        'message' => 'Uno de los archivos superó el límite de peso permitido por el servidor (php.ini) o está corrupto.'
+                    ], 422);
+                }
+            }
+        }
 
         // Crear el registro de la entrega
         $entrega = EntregaActividad::create([
-            'actividad_id'  => $actividad_id,
+            'actividad_id'  => $act_id,
             'estudiante_id' => $estudiante_id,
             'comentario'    => $request->comentario,
             'estado'        => 'pendiente',
         ]);
 
-        // Guardar archivos adjuntos de la entrega
+        // Guardar archivos adjuntos
         if ($request->hasFile('archivos')) {
-            foreach ($request->file('archivos') as $archivo) {
+            $files = $request->file('archivos');
+            if (!is_array($files)) $files = [$files];
+
+            foreach ($files as $archivo) {
                 $ruta = $archivo->store("entregas/{$entrega->id}", 'public');
                 ArchivoEntrega::create([
                     'entrega_id'     => $entrega->id,
@@ -110,6 +132,9 @@ class ActividadController extends Controller
             }
         }
 
-        return response()->json(['message' => '¡Actividad entregada exitosamente!', 'data' => $entrega->load('archivos')], 201);
+        return response()->json([
+            'message' => '¡Actividad entregada exitosamente!',
+            'data' => $entrega->load('archivos')
+        ], 201);
     }
 }
