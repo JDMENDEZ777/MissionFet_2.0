@@ -5,67 +5,70 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProyectoController extends Controller
 {
-    // 1. OBTENER DATOS PARA EL FORMULARIO (Tutores y Estudiantes libres)
-   public function getFormData()
+    // 1. DATOS PARA EL FORMULARIO
+    public function getFormData()
     {
-        // 1. Traemos SOLO tutores (ignorando mayúsculas)
         $tutores = DB::table('users')
             ->whereRaw('LOWER(rol) = ?', ['tutor'])
             ->select('id', 'name as nombre')
             ->get();
 
-        // 2. Buscamos quiénes ya tienen proyecto
         $asignados = DB::table('estudiantes_proyecto')->pluck('estudiante_id')->toArray();
 
-        // 3. Traemos SOLO estudiantes que tengan opción 'proyecto'
-        $query = DB::table('users')
+        $queryLibres = DB::table('users')
             ->whereRaw('LOWER(rol) = ?', ['estudiante'])
             ->whereRaw('LOWER(opcion_grado) = ?', ['proyecto']);
+        if (count($asignados) > 0) $queryLibres->whereNotIn('id', $asignados);
+        $estudiantes = $queryLibres->select('id', 'name as nombre', 'email', 'codigo_estudiante', 'opcion_grado')->get();
 
-        // 4. Excluimos a los que ya tienen proyecto
-        if (count($asignados) > 0) {
-            $query->whereNotIn('id', $asignados);
-        }
-
-        $estudiantes = $query->select('id', 'name as nombre', 'email', 'codigo_estudiante', 'opcion_grado')->get();
+        // Todos los estudiantes de proyecto (para el modal editar)
+        $todosEstudiantes = DB::table('users')
+            ->whereRaw('LOWER(rol) = ?', ['estudiante'])
+            ->whereRaw('LOWER(opcion_grado) = ?', ['proyecto'])
+            ->select('id', 'name as nombre', 'email', 'codigo_estudiante', 'opcion_grado')
+            ->get();
 
         return response()->json([
-            'tutores' => $tutores,
-            'estudiantes' => $estudiantes
+            'tutores'          => $tutores,
+            'estudiantes'      => $estudiantes,
+            'todos_estudiantes' => $todosEstudiantes,
         ]);
     }
 
+    // 2. LISTAR PROYECTOS CON ESTUDIANTES ASIGNADOS
     public function index()
     {
         $proyectos = DB::table('proyectos as p')
-            ->leftJoin('users as u', 'p.tutor_id', '=', 'u.id') // Usamos 'users'
-            ->select('p.*', 'u.name as tutor_nombre') // Extraemos 'name'
+            ->leftJoin('users as u', 'p.tutor_id', '=', 'u.id')
+            ->select('p.*', 'u.name as tutor_nombre')
             ->orderBy('p.id', 'desc')
             ->get();
 
         foreach ($proyectos as $proyecto) {
             $proyecto->num_estudiantes = DB::table('estudiantes_proyecto')
-                ->where('proyecto_id', $proyecto->id)
-                ->count();
+                ->where('proyecto_id', $proyecto->id)->count();
+
+            $proyecto->estudiantes = DB::table('estudiantes_proyecto as ep')
+                ->join('users as u', 'ep.estudiante_id', '=', 'u.id')
+                ->where('ep.proyecto_id', $proyecto->id)
+                ->select('ep.estudiante_id', 'u.name as estudiante_nombre', 'u.email as estudiante_email', 'ep.rol_en_proyecto')
+                ->orderByRaw("ep.rol_en_proyecto = 'líder' DESC")
+                ->get();
         }
 
         return response()->json($proyectos);
     }
 
-
-    
-    // 3. CREAR PROYECTO Y ASIGNAR ESTUDIANTES
+    // 3. CREAR PROYECTO
     public function store(Request $request)
     {
-        // Iniciamos la transacción (Si algo falla, no se guarda nada a medias)
         DB::beginTransaction();
-
         try {
             $archivo_nombre = null;
-
             if ($request->hasFile('archivo_proyecto')) {
                 $file = $request->file('archivo_proyecto');
                 $nombreArchivo = time() . '_' . $file->getClientOriginalName();
@@ -73,42 +76,104 @@ class ProyectoController extends Controller
                 $archivo_nombre = $nombreArchivo;
             }
 
-            // 1. Insertar el proyecto
             $proyecto_id = DB::table('proyectos')->insertGetId([
-                'titulo' => $request->titulo,
-                'descripcion' => $request->descripcion,
+                'titulo'           => $request->titulo,
+                'descripcion'      => $request->descripcion,
                 'archivo_proyecto' => $archivo_nombre,
-                'estado' => 'propuesto',
-                'tipo' => 'proyecto',
-                'tutor_id' => $request->tutor_id ?: null,
-                'created_at' => now(),
+                'estado'           => 'propuesto',
+                'tipo'             => 'proyecto',
+                'tutor_id'         => $request->tutor_id ?: null,
+                'created_at'       => now(),
+                'updated_at'       => now(),
             ]);
 
-            // 2. Insertar estudiantes (Decodificamos el array que nos manda React)
             $estudiantes = json_decode($request->estudiantes);
-            
             if (is_array($estudiantes) && count($estudiantes) > 0) {
                 foreach ($estudiantes as $index => $estudiante_id) {
-                    $rol = ($index === 0) ? 'líder' : 'miembro'; // El primero de la lista siempre es líder
-                    
                     DB::table('estudiantes_proyecto')->insert([
-                        'proyecto_id' => $proyecto_id,
-                        'estudiante_id' => $estudiante_id,
-                        'rol_en_proyecto' => $rol,
-                        'created_at' => now(),
+                        'proyecto_id'     => $proyecto_id,
+                        'estudiante_id'   => $estudiante_id,
+                        'rol_en_proyecto' => ($index === 0) ? 'líder' : 'miembro',
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
                     ]);
                 }
             }
 
-            // Todo salió bien, confirmamos los cambios en la BD
             DB::commit();
-
             return response()->json(['message' => 'Proyecto creado exitosamente'], 201);
-
         } catch (\Exception $e) {
-            // Si hay error, cancelamos todo para no dejar datos corruptos
             DB::rollBack();
-            return response()->json(['message' => 'Error al crear proyecto: ' . $e->getMessage()], 500);
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // 4. ACTUALIZAR PROYECTO (POST con _method=PUT simulado via FormData)
+    public function update(Request $request, $id)
+    {
+        DB::beginTransaction();
+        try {
+            $updateData = [
+                'titulo'      => $request->titulo,
+                'descripcion' => $request->descripcion,
+                'estado'      => $request->estado,
+                'tutor_id'    => $request->tutor_id ?: null,
+                'updated_at'  => now(),
+            ];
+
+            if ($request->hasFile('archivo_proyecto')) {
+                // Eliminar archivo anterior
+                $old = DB::table('proyectos')->where('id', $id)->value('archivo_proyecto');
+                if ($old && Storage::exists("public/proyectos/{$old}")) {
+                    Storage::delete("public/proyectos/{$old}");
+                }
+                $file = $request->file('archivo_proyecto');
+                $nombreArchivo = time() . '_' . $file->getClientOriginalName();
+                $file->storeAs('public/proyectos', $nombreArchivo);
+                $updateData['archivo_proyecto'] = $nombreArchivo;
+            }
+
+            DB::table('proyectos')->where('id', $id)->update($updateData);
+
+            // Re-asignar estudiantes
+            DB::table('estudiantes_proyecto')->where('proyecto_id', $id)->delete();
+            $estudiantes = json_decode($request->estudiantes);
+            if (is_array($estudiantes) && count($estudiantes) > 0) {
+                foreach ($estudiantes as $index => $estudiante_id) {
+                    DB::table('estudiantes_proyecto')->insert([
+                        'proyecto_id'     => $id,
+                        'estudiante_id'   => $estudiante_id,
+                        'rol_en_proyecto' => ($index === 0) ? 'líder' : 'miembro',
+                        'created_at'      => now(),
+                        'updated_at'      => now(),
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Proyecto actualizado exitosamente']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // 5. ELIMINAR PROYECTO
+    public function destroy($id)
+    {
+        DB::beginTransaction();
+        try {
+            $old = DB::table('proyectos')->where('id', $id)->value('archivo_proyecto');
+            if ($old && Storage::exists("public/proyectos/{$old}")) {
+                Storage::delete("public/proyectos/{$old}");
+            }
+            DB::table('estudiantes_proyecto')->where('proyecto_id', $id)->delete();
+            DB::table('proyectos')->where('id', $id)->delete();
+            DB::commit();
+            return response()->json(['message' => 'Proyecto eliminado exitosamente']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
         }
     }
 }

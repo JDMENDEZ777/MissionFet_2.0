@@ -12,6 +12,7 @@ import Registro from './pages/Registro'; // 1. IMPORTAR ARRIBA
 import GestionUsuarios from './pages/admin/GestionUsuarios'; // Ajusta la ruta si es diferente
 import GestionSeminario from './pages/admin/GestionSeminario'; // Nueva página para gestionar seminarios
 import GestionProyectos from './pages/admin/GestionProyectos'; // Nueva página para gestionar proyectos
+import GestionPasantias from './pages/admin/GestionPasantias'; // Nueva página para gestionar pasantías
 
 function App() {
   return (
@@ -32,6 +33,8 @@ function App() {
         <Route path="/seminarios" element={<GestionSeminario />} />
 
         <Route path="/proyectos" element={<GestionProyectos />} />
+
+        <Route path="/pasantias" element={<GestionPasantias />} />
         
         {/* Rutas protegidas para el administrador */}
         <Route path="/dashboard" element={

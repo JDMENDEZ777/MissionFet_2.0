@@ -44,6 +44,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/proyectos/form-data', [App\Http\Controllers\Admin\ProyectoController::class, 'getFormData']);
     Route::get('/admin/proyectos', [App\Http\Controllers\Admin\ProyectoController::class, 'index']);
     Route::post('/admin/proyectos', [App\Http\Controllers\Admin\ProyectoController::class, 'store']);
+    Route::post('/admin/proyectos/{id}', [App\Http\Controllers\Admin\ProyectoController::class, 'update']);
+    Route::delete('/admin/proyectos/{id}', [App\Http\Controllers\Admin\ProyectoController::class, 'destroy']);
+
+    // --- RUTAS DE PASANTIAS ---
+    Route::get('/admin/pasantias/form-data', [App\Http\Controllers\Admin\PasantiaController::class, 'getFormData']);
+    Route::get('/admin/pasantias', [App\Http\Controllers\Admin\PasantiaController::class, 'index']);
+    Route::post('/admin/pasantias', [App\Http\Controllers\Admin\PasantiaController::class, 'store']);
+    Route::post('/admin/pasantias/{id}', [App\Http\Controllers\Admin\PasantiaController::class, 'update']);
+    Route::delete('/admin/pasantias/{id}', [App\Http\Controllers\Admin\PasantiaController::class, 'destroy']);
 
 
     Route::get('/admin/aprobaciones', [AprobacionController::class, 'index']);
