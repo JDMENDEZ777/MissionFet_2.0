@@ -764,3 +764,37 @@
     .modulo-gestion-proyectos .gp-form-actions { flex-direction: column; }
     .modulo-gestion-proyectos .gp-modal-content { padding: 20px; }
 }
+
+/* --- FIX RESPONSIVE UNIVERSAL --- */
+@media (max-width: 768px) {
+    main.nav-active {
+        margin-left: 0 !important; /* Evitar que empuje el contenido fuera de la pantalla en móviles */
+    }
+    main {
+        padding: 100px 15px 15px !important;
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+    .table-container {
+        width: 100%;
+        overflow-x: auto;
+    }
+    #navbar {
+        width: 100% !important; /* Que cubra toda la pantalla al abrirse en móvil */
+        left: -100%;
+    }
+    #navbar.active {
+        left: 0 !important;
+    }
+    .filters-section {
+        padding: 15px !important;
+    }
+    .modal-content {
+        width: 95% !important;
+        padding: 20px !important;
+        margin: 10% auto !important;
+    }
+}
+@media (max-width: 480px) {
+    h1 { font-size: 1.8rem !important; }
+}

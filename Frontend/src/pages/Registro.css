@@ -178,3 +178,19 @@
         gap: 15px;
     }
 }
+/* --- FIX RESPONSIVE UNIVERSAL REGISTRO --- */
+@media (max-width: 768px) {
+    .registro-container {
+        padding: 20px !important;
+        width: 95% !important;
+        margin: 10px auto !important;
+    }
+    .registro-form-group input, .registro-form-group select {
+        height: 45px !important;
+        font-size: 16px !important; /* Evita auto-zoom en iOS y mejora tap */
+    }
+    .registro-container h2 {
+        font-size: 22px !important;
+        margin-bottom: 20px !important;
+    }
+}
