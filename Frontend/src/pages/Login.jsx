@@ -34,7 +34,7 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
+            <div className="login-form-group">
                 <label>Correo Electrónico</label>
                 <input 
                   type="email" 
@@ -44,7 +44,7 @@ export default function Login() {
                 />
               </div>
 
-              <div className="form-group">
+              <div className="login-form-group">
                 <label>Contraseña</label>
                 <input 
                   type="password" 

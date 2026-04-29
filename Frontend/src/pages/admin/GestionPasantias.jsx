@@ -171,31 +171,33 @@ export default function GestionPasantias() {
 
   return (
     <div className="modulo-gestion-pasantias">
-      {/* NAVBAR */}
+      {/* LOGO (botón hamburguesa) */}
       <div id="pa-logo" onClick={() => setNavActive(!navActive)}>
         <img src="/IMG/logofet.png" alt="Logo FET" className="pa-logo-img" />
       </div>
 
+      {/* NAVBAR */}
       <nav id="pa-navbar" className={navActive ? 'active' : ''}>
         <div className="pa-nav-header">
-          <img src="/IMG/logofet.png" alt="Logo FET" className="pa-logo-img" style={{ height: '40px' }} />
+          
+          <ul>
+            <li><Link to="/dashboard">Inicio</Link></li>
+            <li><Link to="/aprobacion">Aprobación de Usuarios</Link></li>
+            <li><Link to="/usuarios">Gestión de Usuarios</Link></li>
+            <li className="pa-dropdown">
+              <a href="#">Gestión de Modalidades de Grado</a>
+              <ul className="pa-dropdown-content">
+                <li><Link to="/seminarios">Seminario</Link></li>
+                <li><Link to="/proyectos">Proyectos</Link></li>
+                <li><Link to="/pasantias" className="active">Pasantías</Link></li>
+              </ul>
+            </li>
+            <li><Link to="/reportes">Reportes y Estadísticas</Link></li>
+            <li><a href="#" onClick={() => { localStorage.removeItem('token'); navigate('/login'); }}>Cerrar Sesión</a></li>
+          </ul>
         </div>
-        <ul>
-          <li><Link to="/dashboard">Inicio</Link></li>
-          <li><Link to="/aprobacion">Aprobación de Usuarios</Link></li>
-          <li><Link to="/usuarios">Gestión de Usuarios</Link></li>
-          <li className="pa-dropdown">
-            <a href="#">Gestión de Modalidades de Grado</a>
-            <ul className="pa-dropdown-content">
-              <li><Link to="/seminarios">Seminario</Link></li>
-              <li><Link to="/proyectos">Proyectos</Link></li>
-              <li><Link to="/pasantias" className="active">Pasantías</Link></li>
-            </ul>
-          </li>
-          <li><Link to="/reportes">Reportes y Estadísticas</Link></li>
-          <li><a href="#" onClick={() => { localStorage.removeItem('token'); navigate('/login'); }}>Cerrar Sesión</a></li>
-        </ul>
       </nav>
+
 
       {/* MAIN */}
       <main className={`pa-main${navActive ? ' nav-active' : ''}`}>

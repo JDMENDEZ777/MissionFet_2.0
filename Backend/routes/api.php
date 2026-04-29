@@ -54,6 +54,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/pasantias/{id}', [App\Http\Controllers\Admin\PasantiaController::class, 'update']);
     Route::delete('/admin/pasantias/{id}', [App\Http\Controllers\Admin\PasantiaController::class, 'destroy']);
 
+    // --- RUTAS DE REPORTES ---
+    Route::get('/admin/reportes', [App\Http\Controllers\Admin\ReporteController::class, 'getMetricas']);
+
 
     Route::get('/admin/aprobaciones', [AprobacionController::class, 'index']);
     Route::get('/admin/historial', [AprobacionController::class, 'getHistorial']);

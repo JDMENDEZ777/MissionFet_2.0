@@ -1,18 +1,22 @@
 /* src/pages/Registro.css */
 
 .registro-page {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Para permitir scrollear si es muy largo */
     background-image: url('/IMG/fondologin.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     font-family: 'Roboto', sans-serif;
     color: #ffffff;
+    z-index: 10000;
 }
 
 .registro-container {
@@ -60,34 +64,47 @@
     margin-bottom: 20px;
 }
 
-.form-group {
+.registro-form-group {
     flex: 1;
     display: flex;
     flex-direction: column;
     min-width: 250px; /* Para que en móviles se apilen bien */
 }
 
-.form-group label {
+.registro-form-group label {
     margin-bottom: 5px;
     font-weight: 500;
     color: #ffffff;
     font-size: 14px;
 }
 
-.form-group input, 
-.form-group select {
+.registro-form-group input, 
+.registro-form-group select {
     width: 100%;
-    padding: 10px;
+    height: 42px;
+    padding: 0 12px;
     border: none;
     border-radius: 5px;
     background: rgba(255, 255, 255, 0.9);
     color: #333;
     font-size: 14px;
     box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+    outline: none;
+    margin: 0;
 }
 
-.form-group input:focus, 
-.form-group select:focus {
+/* Evitar que el autocompletado de Chrome cambie el fondo a azul o blanco opaco */
+.registro-form-group input:-webkit-autofill,
+.registro-form-group input:-webkit-autofill:hover, 
+.registro-form-group input:-webkit-autofill:focus, 
+.registro-form-group input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #f0f0f0 inset !important;
+    -webkit-text-fill-color: #333 !important;
+}
+
+.registro-form-group input:focus, 
+.registro-form-group select:focus {
     outline: none;
     box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 }

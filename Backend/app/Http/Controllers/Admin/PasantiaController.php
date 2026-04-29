@@ -87,9 +87,11 @@ class PasantiaController extends Controller
 
             DB::table('pasantias')->insert([
                 'estudiante_id'       => $request->estudiante_id,
+                'user_id'             => $request->estudiante_id, // columna legacy V1
+                'cargo'               => '',                       // columna legacy V1
                 'titulo'              => $request->titulo,
                 'descripcion'         => $request->descripcion,
-                'empresa'             => $request->empresa,
+                'empresa'             => $request->empresa ?? '',
                 'direccion_empresa'   => $request->direccion_empresa,
                 'contacto_empresa'    => $request->contacto_empresa,
                 'supervisor_empresa'  => $request->supervisor_empresa,

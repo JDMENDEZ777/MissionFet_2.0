@@ -14,6 +14,8 @@ import GestionSeminario from './pages/admin/GestionSeminario'; // Nueva página 
 import GestionProyectos from './pages/admin/GestionProyectos'; // Nueva página para gestionar proyectos
 import GestionPasantias from './pages/admin/GestionPasantias'; // Nueva página para gestionar pasantías
 
+// Forzando el reload de Vite...
+
 function App() {
   return (
     <BrowserRouter>
@@ -35,6 +37,8 @@ function App() {
         <Route path="/proyectos" element={<GestionProyectos />} />
 
         <Route path="/pasantias" element={<GestionPasantias />} />
+
+        <Route path="/reportes" element={<Reportes />} />
         
         {/* Rutas protegidas para el administrador */}
         <Route path="/dashboard" element={

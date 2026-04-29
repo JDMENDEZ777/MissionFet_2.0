@@ -67,7 +67,7 @@ export default function Registro() {
           {error && <div className="mensaje error">{error}</div>}
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="registro-form-group">
               <label>Rol:</label>
               <select name="rol" value={formData.rol} onChange={handleChange} required>
                 <option value="estudiante">Estudiante</option>
@@ -75,19 +75,19 @@ export default function Registro() {
               </select>
             </div>
             
-            <div className="form-group">
+            <div className="registro-form-group">
               <label>Nombre completo:</label>
               <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required />
             </div>
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="registro-form-group">
               <label>Correo institucional:</label>
               <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="ejemplo@fet.edu.co" required />
               <small className="email-hint">El correo debe terminar en @fet.edu.co</small>
             </div>
-            <div className="form-group">
+            <div className="registro-form-group">
               <label>Número de documento:</label>
               <input type="number" name="documento" value={formData.documento} onChange={handleChange} required />
             </div>
@@ -97,11 +97,11 @@ export default function Registro() {
           {formData.rol === 'estudiante' && (
             <>
               <div className="form-row">
-                <div className="form-group">
+                <div className="registro-form-group">
                   <label>Código de estudiante:</label>
                   <input type="text" name="codigo_estudiante" value={formData.codigo_estudiante} onChange={handleChange} required />
                 </div>
-                <div className="form-group">
+                <div className="registro-form-group">
                   <label>Opción de grado:</label>
                   <select name="opcion_grado" value={formData.opcion_grado} onChange={handleChange} required>
                     <option value="">Seleccione una opción</option>
@@ -114,7 +114,7 @@ export default function Registro() {
 
               {formData.opcion_grado === 'proyecto' && (
                 <div className="form-row">
-                  <div className="form-group">
+                  <div className="registro-form-group">
                     <label>Nombre del proyecto:</label>
                     <input type="text" name="nombre_proyecto" value={formData.nombre_proyecto} onChange={handleChange} required />
                   </div>
@@ -123,7 +123,7 @@ export default function Registro() {
 
               {formData.opcion_grado === 'pasantia' && (
                 <div className="form-row">
-                  <div className="form-group">
+                  <div className="registro-form-group">
                     <label>Nombre de la empresa:</label>
                     <input type="text" name="nombre_empresa" value={formData.nombre_empresa} onChange={handleChange} required />
                   </div>
@@ -131,7 +131,7 @@ export default function Registro() {
               )}
 
               <div className="form-row">
-                <div className="form-group">
+                <div className="registro-form-group">
                   <label>Ciclo:</label>
                   <select name="ciclo" value={formData.ciclo} onChange={handleChange} required>
                     <option value="">Seleccione un ciclo</option>
@@ -140,7 +140,7 @@ export default function Registro() {
                     <option value="profesional">Profesional</option>
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="registro-form-group">
                   <label>Teléfono:</label>
                   <input type="number" name="telefono" value={formData.telefono} onChange={handleChange} required />
                 </div>
@@ -151,11 +151,11 @@ export default function Registro() {
           {/* === CAMPOS DINÁMICOS: TUTOR === */}
           {formData.rol === 'tutor' && (
             <div className="form-row">
-              <div className="form-group">
+              <div className="registro-form-group">
                 <label>Código institucional:</label>
                 <input type="text" name="codigo_institucional" value={formData.codigo_institucional} onChange={handleChange} required />
               </div>
-              <div className="form-group">
+              <div className="registro-form-group">
                 <label>Teléfono Tutor:</label>
                 <input type="number" name="telefono_tutor" value={formData.telefono_tutor} onChange={handleChange} required />
               </div>
@@ -163,11 +163,11 @@ export default function Registro() {
           )}
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="registro-form-group">
               <label>Contraseña:</label>
               <input type="password" name="password" value={formData.password} onChange={handleChange} required />
             </div>
-            <div className="form-group">
+            <div className="registro-form-group">
               <label>Confirmar contraseña:</label>
               <input type="password" name="confirm_password" value={formData.confirm_password} onChange={handleChange} required />
             </div>

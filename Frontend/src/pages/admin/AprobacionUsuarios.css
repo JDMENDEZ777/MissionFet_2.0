@@ -40,13 +40,13 @@ body {
     top: 20px;
     left: 20px;
     cursor: pointer;
-    padding: 12px;
+    padding: 4px 20px;
     z-index: 1000;
     background-color: var(--color-white);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-soft);
     width: auto;
-    height: 60px;
+    height: 85px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -64,7 +64,7 @@ body {
     width: auto;
     max-height: 100%;
     object-fit: contain;
-    padding: 0 8px;
+    padding: 0;
 }
 
 /* Navegación - Estilo alineado y desplazamiento de contenido */
@@ -413,7 +413,7 @@ footer.nav-active {
     #logo {
         width: auto;
         max-width: 160px;
-        height: 50px;
+        height: 85px;
         top: 16px;
         left: 16px;
     }

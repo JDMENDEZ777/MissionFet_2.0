@@ -30,19 +30,22 @@ html, body {
 
 /* Convertimos el body en una clase específica para no dañar el Dashboard */
 .login-page {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Ajusta esta ruta si tu imagen está en public/img/ o en src/img/ */
     background-image: url('/IMG/fondologin.png'); 
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     font-family: 'Roboto', sans-serif;
     color: #ffffff;
+    z-index: 10000; /* Asegurarse de ocultar el fondo blanco de otros módulos */
 }
 
 /* Contenedor principal */
@@ -85,11 +88,12 @@ html, body {
 }
 
 /* Campos del formulario */
-.form-group {
+/* Campos del formulario */
+.login-form-group {
     margin-bottom: 20px;
 }
 
-.form-group label {
+.login-form-group label {
     display: block;
     color: white;
     margin-bottom: 5px;
@@ -98,9 +102,10 @@ html, body {
     letter-spacing: 0.5px;
 }
 
-.form-group input {
+.login-form-group input {
     width: 100%;
-    padding: 12px;
+    height: 42px;
+    padding: 0 12px;
     border: none;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.9);
@@ -108,9 +113,22 @@ html, body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     color: #333; /* Para que el texto que escribas se vea oscuro */
     box-sizing: border-box; /* Para que el padding no desborde el ancho */
+    font-family: 'Roboto', sans-serif;
+    outline: none;
+    margin: 0;
 }
 
-.form-group input:focus {
+/* Evitar que el autocompletado de Chrome cambie el fondo a azul o blanco opaco */
+.login-form-group input:-webkit-autofill,
+.login-form-group input:-webkit-autofill:hover, 
+.login-form-group input:-webkit-autofill:focus, 
+.login-form-group input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #f0f0f0 inset !important;
+    -webkit-text-fill-color: #333 !important;
+    border-radius: 8px;
+}
+
+.login-form-group input:focus {
     outline: none;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 255, 0, 0.2);
