@@ -24,8 +24,8 @@ export default function Login() {
         navigate('/dashboard');
       } else if (user.rol === 'tutor') {
         navigate('/tutor/dashboard');
-      } else if (user.rol === 'estudiante') {
-        navigate('/estudiante/dashboard');
+      } else if (user.rol === 'estudiante' || !user.rol) {
+        navigate('/estudiante/proyecto');
       } else {
         navigate('/'); // Fallback
       }

@@ -1,3 +1,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────
+   FIX: Tailwind Preflight resetea font-family en todos los elementos,
+   lo que rompe Font Awesome. Este bloque restaura las propiedades
+   necesarias para que los íconos fa-* funcionen en toda la app.
+   NO afecta ningún otro componente ni estilo personalizado.
+──────────────────────────────────────────────────────────────────── */
+@layer base {
+  .fa,
+  .fas,
+  .far,
+  .fal,
+  .fat,
+  .fad,
+  .fab,
+  .fa-solid,
+  .fa-regular,
+  .fa-light,
+  .fa-thin,
+  .fa-duotone,
+  .fa-brands {
+    font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands", "Font Awesome 6 Pro" !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-rendering: auto !important;
+    -webkit-font-smoothing: antialiased !important;
+    display: inline-block;
+    speak: never;
+  }
+}

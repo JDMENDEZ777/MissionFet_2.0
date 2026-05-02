@@ -13,7 +13,9 @@ import GestionUsuarios from './pages/admin/GestionUsuarios'; // Ajusta la ruta s
 import GestionSeminario from './pages/admin/GestionSeminario'; // Nueva página para gestionar seminarios
 import GestionProyectos from './pages/admin/GestionProyectos'; // Nueva página para gestionar proyectos
 import GestionPasantias from './pages/admin/GestionPasantias'; // Nueva página para gestionar pasantías
-import TutorDashboard from './pages/tutores/tutor'; // Nueva página para el portal del tutor
+import TutorDashboard from './pages/tutores/tutor';
+import TutorProyectos from './pages/tutores/tutor_proyectos';
+import EstudianteProyecto from './pages/estudiantes/estudiante_proyecto';
 
 // Forzando el reload de Vite...
 
@@ -54,9 +56,19 @@ function App() {
         } />
         
         {/* Rutas para el Tutor */}
+        <Route path="/tutor/proyectos" element={
+          <ProtectedRoute allowedRoles={['tutor']}><TutorProyectos /></ProtectedRoute>
+        } />
         <Route path="/tutor/dashboard" element={
           <ProtectedRoute allowedRoles={['tutor']}>
             <TutorDashboard />
+          </ProtectedRoute>
+        } />
+
+        {/* ESTUDIANTES */}
+        <Route path="/estudiante/proyecto" element={
+          <ProtectedRoute allowedRoles={['estudiante']}>
+            <EstudianteProyecto />
           </ProtectedRoute>
         } />
         

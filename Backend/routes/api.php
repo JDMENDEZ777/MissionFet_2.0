@@ -15,6 +15,13 @@ Route::post('/admin/aprobar/{id}', [AprobacionController::class, 'aprobar']);
 Route::post('/registro', [AuthController::class, 'register']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // ESTUDIANTE: Panel de Proyectos
+    Route::get('/estudiante/proyecto',                   [App\Http\Controllers\Estudiante\EstudianteProyectoController::class, 'index']);
+    Route::post('/estudiante/proyecto/avances',          [App\Http\Controllers\Estudiante\EstudianteProyectoController::class, 'subirAvance']);
+    Route::get('/estudiante/proyecto/mensajes',          [App\Http\Controllers\Estudiante\EstudianteProyectoController::class, 'getMensajes']);
+    Route::post('/estudiante/proyecto/mensajes',         [App\Http\Controllers\Estudiante\EstudianteProyectoController::class, 'sendMensaje']);
+
+    // ADMINISTRADOR
     // ... tus otras rutas ...
     Route::get('/admin/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index']);
     Route::get('/admin/aprobaciones', [AprobacionController::class, 'index']);
@@ -59,6 +66,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- RUTAS DE TUTOR ---
     Route::get('/tutor/dashboard', [App\Http\Controllers\Tutor\TutorDashboardController::class, 'getStats']);
+
+    // Panel Proyectos del Tutor
+    Route::get('/tutor/proyectos',                    [App\Http\Controllers\Tutor\TutorProyectosController::class, 'index']);
+    Route::get('/tutor/proyectos/pendientes',         [App\Http\Controllers\Tutor\TutorProyectosController::class, 'getPendientes']);
+    Route::get('/tutor/proyectos/{id}',               [App\Http\Controllers\Tutor\TutorProyectosController::class, 'show']);
+    Route::post('/tutor/proyectos/calificar',         [App\Http\Controllers\Tutor\TutorProyectosController::class, 'calificar']);
+    Route::post('/tutor/proyectos/{id}/init-avances', [App\Http\Controllers\Tutor\TutorProyectosController::class, 'initAvances']);
+    Route::get('/tutor/proyectos/{id}/mensajes',      [App\Http\Controllers\Tutor\TutorProyectosController::class, 'getMensajes']);
+    Route::post('/tutor/proyectos/{id}/mensajes',     [App\Http\Controllers\Tutor\TutorProyectosController::class, 'sendMensaje']);
 
 
     Route::get('/admin/aprobaciones', [AprobacionController::class, 'index']);

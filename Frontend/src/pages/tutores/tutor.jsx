@@ -54,15 +54,11 @@ const TutorDashboard = () => {
     };
 
     const goToPasantias = () => {
-        if (stats.tiene_pasantias) {
-            navigate('/tutor/pasantias');
-        }
+        if (stats.tiene_pasantias) navigate('/tutor/pasantias');
     };
 
     const goToProyectos = () => {
-        if (stats.tiene_proyectos) {
-            navigate('/tutor/proyectos');
-        }
+        if (stats.tiene_proyectos) navigate('/tutor/proyectos');
     };
 
     if (loading) return <div className="portal-tutor-wrapper"><div className="main-content">Cargando portal...</div></div>;
