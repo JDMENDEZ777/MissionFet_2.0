@@ -57,6 +57,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // --- RUTAS DE REPORTES ---
     Route::get('/admin/reportes', [App\Http\Controllers\Admin\ReporteController::class, 'getMetricas']);
 
+    // --- RUTAS DE TUTOR ---
+    Route::get('/tutor/dashboard', [App\Http\Controllers\Tutor\TutorDashboardController::class, 'getStats']);
+
 
     Route::get('/admin/aprobaciones', [AprobacionController::class, 'index']);
     Route::get('/admin/historial', [AprobacionController::class, 'getHistorial']);

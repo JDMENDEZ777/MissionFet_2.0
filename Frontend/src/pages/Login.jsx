@@ -13,8 +13,23 @@ export default function Login() {
     e.preventDefault();
     try {
       const response = await api.post('/login', formData);
-      localStorage.setItem('token', response.data.access_token);
-      navigate('/dashboard'); 
+      const { access_token, user } = response.data;
+
+      // Guardar token y datos del usuario
+      localStorage.setItem('token', access_token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Redirección inteligente por ROL
+      if (user.rol === 'admin') {
+        navigate('/dashboard');
+      } else if (user.rol === 'tutor') {
+        navigate('/tutor/dashboard');
+      } else if (user.rol === 'estudiante') {
+        navigate('/estudiante/dashboard');
+      } else {
+        navigate('/'); // Fallback
+      }
+
     } catch (error) {
       console.error('Error:', error.response);
       alert('Error: ' + (error.response?.data?.message || 'No se pudo conectar'));

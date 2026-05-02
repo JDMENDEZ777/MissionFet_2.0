@@ -13,6 +13,7 @@ import GestionUsuarios from './pages/admin/GestionUsuarios'; // Ajusta la ruta s
 import GestionSeminario from './pages/admin/GestionSeminario'; // Nueva página para gestionar seminarios
 import GestionProyectos from './pages/admin/GestionProyectos'; // Nueva página para gestionar proyectos
 import GestionPasantias from './pages/admin/GestionPasantias'; // Nueva página para gestionar pasantías
+import TutorDashboard from './pages/tutores/tutor'; // Nueva página para el portal del tutor
 
 // Forzando el reload de Vite...
 
@@ -28,21 +29,40 @@ function App() {
         {/* Ruta para el registro */}
         <Route path="/registro" element={<Registro />} />
 
-        <Route path="/aprobacion" element={<AprobacionUsuarios />} />
+        <Route path="/aprobacion" element={
+          <ProtectedRoute allowedRoles={['admin']}><AprobacionUsuarios /></ProtectedRoute>
+        } />
 
-        <Route path="/usuarios" element={<GestionUsuarios />} />
+        <Route path="/usuarios" element={
+          <ProtectedRoute allowedRoles={['admin']}><GestionUsuarios /></ProtectedRoute>
+        } />
 
-        <Route path="/seminarios" element={<GestionSeminario />} />
+        <Route path="/seminarios" element={
+          <ProtectedRoute allowedRoles={['admin']}><GestionSeminario /></ProtectedRoute>
+        } />
 
-        <Route path="/proyectos" element={<GestionProyectos />} />
+        <Route path="/proyectos" element={
+          <ProtectedRoute allowedRoles={['admin']}><GestionProyectos /></ProtectedRoute>
+        } />
 
-        <Route path="/pasantias" element={<GestionPasantias />} />
+        <Route path="/pasantias" element={
+          <ProtectedRoute allowedRoles={['admin']}><GestionPasantias /></ProtectedRoute>
+        } />
 
-        <Route path="/reportes" element={<Reportes />} />
+        <Route path="/reportes" element={
+          <ProtectedRoute allowedRoles={['admin']}><Reportes /></ProtectedRoute>
+        } />
+        
+        {/* Rutas para el Tutor */}
+        <Route path="/tutor/dashboard" element={
+          <ProtectedRoute allowedRoles={['tutor']}>
+            <TutorDashboard />
+          </ProtectedRoute>
+        } />
         
         {/* Rutas protegidas para el administrador */}
         <Route path="/dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['admin']}>
             <AdminLayout />
           </ProtectedRoute>
         }>
