@@ -128,9 +128,12 @@ export default function TutorSeminario() {
     if (guardando) return;
     setGuardando(true);
     const fd = new FormData();
+    fd.append('has_files', formActividad.archivos && formActividad.archivos.length > 0 ? '1' : '0');
     Object.entries(formActividad).forEach(([k,v]) => {
       if (k === 'archivos') {
-        v.forEach(f => fd.append('archivos[]', f));
+        if (v && v.length) {
+          v.forEach(f => fd.append('archivos[]', f));
+        }
       } else if (k === 'permitir_entregas_tarde') {
         fd.append(k, v ? 1 : 0);
       } else {
@@ -144,8 +147,15 @@ export default function TutorSeminario() {
     } catch (e) {
       console.error(e);
       const errors = e.response?.data?.errors;
-      if (errors) alert('Errores de validación:\n' + Object.values(errors).flat().join('\n'));
-      else alert('Error al guardar la actividad');
+      const message = e.response?.data?.message;
+      
+      if (errors) {
+        alert('Errores de validación:\n' + Object.values(errors).flat().join('\n'));
+      } else if (message) {
+        alert(message);
+      } else {
+        alert('Error al guardar la actividad');
+      }
     } finally {
       setGuardando(false);
     }

@@ -87,10 +87,11 @@ class ActividadController extends Controller
             'comentario' => 'nullable',
         ]);
 
-        // Si el frontend envió archivos pero PHP los descartó todos (payload vacío por post_max_size)
-        if ($request->input('has_files') === '1' && !$request->hasFile('archivos')) {
+        // Si el tamaño del body supera post_max_size, PHP vacía $_POST y $_FILES
+        $contentLength = (int) $request->server('CONTENT_LENGTH');
+        if ($contentLength > 0 && empty($request->all())) {
             return response()->json([
-                'message' => 'El archivo supera el tamaño máximo global permitido por el servidor (post_max_size). Intenta con un archivo más pequeño.'
+                'message' => 'El archivo que intentas subir es demasiado pesado y supera el límite de tu servidor. Intenta con un archivo más pequeño.'
             ], 422);
         }
 

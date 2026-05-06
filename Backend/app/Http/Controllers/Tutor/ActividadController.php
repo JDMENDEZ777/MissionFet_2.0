@@ -70,6 +70,30 @@ class ActividadController extends Controller
      */
     public function store(Request $request, $seminario_id)
     {
+        \Illuminate\Support\Facades\Log::info('POST a store Actividad', $request->all());
+        
+        // Si el tamaño del body supera post_max_size, PHP vacía $_POST y $_FILES
+        $contentLength = (int) $request->server('CONTENT_LENGTH');
+        if ($contentLength > 0 && empty($request->all())) {
+            \Illuminate\Support\Facades\Log::warning('Payload vacío por post_max_size', ['content_length' => $contentLength]);
+            return response()->json([
+                'message' => 'El archivo que intentas subir es demasiado pesado y supera el límite de tu servidor. Intenta con un archivo más pequeño.'
+            ], 422);
+        }
+
+        // Validación manual para ver si algún archivo superó el upload_max_filesize (por defecto 2MB)
+        if ($request->hasFile('archivos')) {
+            $archivos = $request->file('archivos');
+            if (!is_array($archivos)) $archivos = [$archivos];
+            foreach ($archivos as $archivo) {
+                if (!$archivo->isValid()) {
+                    return response()->json([
+                        'message' => 'Uno de los archivos que intentas subir es más pesado que el límite de 2MB configurado en tu servidor (upload_max_filesize). Debes editar tu php.ini o subir un archivo más pequeño.'
+                    ], 422);
+                }
+            }
+        }
+
         $request->validate([
             'titulo'                  => 'required|string|max:255',
             'descripcion'             => 'nullable|string',

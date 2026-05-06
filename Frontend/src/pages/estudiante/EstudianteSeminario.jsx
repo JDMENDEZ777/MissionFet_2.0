@@ -488,7 +488,9 @@ export default function EstudianteSeminario() {
                         return (
                           <div className="recording-card" key={clase.id}>
                             <div className="video-thumbnail" onClick={() => setVideoUrl(clase.url_grabacion)}>
-                              <img src={thumbnail} alt={clase.titulo} className="thumbnail-img" />
+                              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e9ecef', color: '#6c757d' }}>
+                                <i className="fas fa-video fa-3x"></i>
+                              </div>
                               <div className="play-button"><i className="fas fa-play"></i></div>
                               <div className="video-duration">{clase.duracion} min</div>
                             </div>
@@ -521,10 +523,7 @@ export default function EstudianteSeminario() {
                       const randomImg = `https://images.unsplash.com/photo-${1555066931 + Math.floor(Math.random() * 1000)}-?w=400&q=80`;
                       return (
                         <div className="recording-card" key={mat.id}>
-                          <div className="video-thumbnail" style={{ height: 160 }}>
-                            <img src={mat.imagen || randomImg} alt={mat.titulo} className="thumbnail-img" />
-                            {mat.tipo && <span className="material-type-badge"><i className="fas fa-tag"></i> {mat.tipo}</span>}
-                          </div>
+
                           <div className="recording-info">
                             <h3 className="recording-title">{mat.titulo}</h3>
                             <div className="recording-meta" style={{ marginBottom: 15 }}>
@@ -552,9 +551,7 @@ export default function EstudianteSeminario() {
                       { title: 'Tutorial de JavaScript', size: '1.8MB', type: 'PDF', link: '#' }
                     ].map((doc, idx) => (
                       <div className="recording-card" key={idx}>
-                        <div className="video-thumbnail" style={{ height: 160 }}>
-                          <img src={idx === 1 ? 'https://images.unsplash.com/photo-1555066931?w=400&q=80' : `https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=400&q=80`} alt={doc.title} className="thumbnail-img" />
-                        </div>
+
                         <div className="recording-info">
                           <h3 className="recording-title" style={{ fontSize: '1.4rem', fontWeight: 700 }}>{doc.title}</h3>
                           <div className="recording-meta" style={{ marginBottom: 15 }}>
@@ -572,9 +569,7 @@ export default function EstudianteSeminario() {
                       { name: 'Node.js', description: 'Entorno de ejecución para JavaScript', link: 'https://nodejs.org/download', img: '1504639725' }
                     ].map((tool, idx) => (
                       <div className="recording-card" key={idx}>
-                        <div className="video-thumbnail" style={{ height: 160 }}>
-                          <img src={`https://images.unsplash.com/photo-${tool.img}?w=400&q=80`} alt={tool.name} className="thumbnail-img" />
-                        </div>
+
                         <div className="recording-info">
                           <h3 className="recording-title" style={{ fontSize: '1.4rem', fontWeight: 700 }}>{tool.name}</h3>
                           <p className="material-description" style={{ fontSize: '0.85rem', marginBottom: 15 }}>{tool.description}</p>
