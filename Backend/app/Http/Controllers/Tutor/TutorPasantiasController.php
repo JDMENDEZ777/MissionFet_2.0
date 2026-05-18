@@ -482,9 +482,19 @@ class TutorPasantiasController extends Controller
             return response('Esta evaluación aún no ha sido registrada por el tutor.', 404);
         }
 
+        $eval1 = DB::table('pasantia_evaluaciones')
+            ->where('pasantia_id', $id)
+            ->where('corte', 1)
+            ->first();
+
+        $eval2 = DB::table('pasantia_evaluaciones')
+            ->where('pasantia_id', $id)
+            ->where('corte', 2)
+            ->first();
+
         $url_logofet = asset('IMG/logofet.png');
 
-        return view('pdf_evaluacion', compact('p', 'eval', 'corte', 'url_logofet'));
+        return view('pdf_evaluacion', compact('p', 'eval', 'corte', 'url_logofet', 'eval1', 'eval2'));
     }
 
     // GET /api/pasantias/{id}/excel/asistencia
@@ -499,7 +509,10 @@ class TutorPasantiasController extends Controller
                 'e.name as estudiante_nombre',
                 'e.codigo_estudiante',
                 'e.documento as estudiante_documento',
-                't.name as tutor_nombre'
+                'e.ciclo',
+                'e.firma as estudiante_firma',
+                't.name as tutor_nombre',
+                't.firma as tutor_firma'
             )
             ->first();
 

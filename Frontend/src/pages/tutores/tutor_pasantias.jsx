@@ -32,7 +32,7 @@ export default function TutorPasantias() {
   const [user, setUser] = useState(null);
   const [section, setSection] = useState('dashboard'); // 'dashboard', 'bitacoras_pendientes', 'detalle', 'firma_settings'
   const [activeSubTab, setActiveSubTab] = useState('acta'); // 'acta', 'plan', 'bitacora', 'evaluacion', 'descargas'
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -49,7 +49,7 @@ export default function TutorPasantias() {
 
   // Firma del Tutor
   const [firmaTutorUrl, setFirmaTutorUrl] = useState('');
-  
+
   // Modales y Formularios de Calificación Semanal
   const [modalAsistencia, setModalAsistencia] = useState(null);
   const [modalEstado, setModalEstado] = useState('aprobado');
@@ -175,7 +175,7 @@ export default function TutorPasantias() {
             ]
           });
         }
-        
+
         // Limpiar form de evaluación
         cargarEvaluacionCorte(1, r.data.evaluaciones);
       } else {
@@ -383,10 +383,10 @@ export default function TutorPasantias() {
   const promActitudinal = calcPromedio(actitudinalFields);
   const promProcedimental = calcPromedio(procedimentalFields);
   const promCognitiva = calcPromedio(cognitivaFields);
-  
+
   const notaCorteTotal = (
-    parseFloat(promActitudinal) * 0.25 + 
-    parseFloat(promProcedimental) * 0.35 + 
+    parseFloat(promActitudinal) * 0.25 +
+    parseFloat(promProcedimental) * 0.35 +
     parseFloat(promCognitiva) * 0.40
   ).toFixed(2);
 
@@ -423,7 +423,7 @@ export default function TutorPasantias() {
         corte: corteEval,
         ...evalForm
       };
-      
+
       const response = await axios.post(`${API}/tutor/pasantias/evaluaciones/calificar`, dataPayload, getHeaders());
       if (response.data.success) {
         setSuccess(response.data.message);
@@ -440,15 +440,15 @@ export default function TutorPasantias() {
 
   // Filtrado de estudiantes
   const pasantiasFiltradas = pasantias.filter(p => {
-    const matchSearch = p.estudiante_nombre.toLowerCase().includes(search.toLowerCase()) || 
-                        p.empresa.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = p.estudiante_nombre.toLowerCase().includes(search.toLowerCase()) ||
+      p.empresa.toLowerCase().includes(search.toLowerCase());
     const matchEstado = filterEstado === '' ? true : p.estado === filterEstado;
     return matchSearch && matchEstado;
   });
 
   return (
     <div className="tps-wrapper">
-      
+
       {/* SIDEBAR */}
       <aside className="tps-sidebar">
         <div className="tps-sidebar-header">
@@ -456,19 +456,19 @@ export default function TutorPasantias() {
           <h2 style={{ fontSize: '1rem', fontWeight: 800, letterSpacing: '0.05em', margin: 0 }}>PANEL PASANTÍAS</h2>
         </div>
         <nav className="tps-sidebar-menu">
-          <button 
+          <button
             className={`tps-menu-item ${section === 'dashboard' ? 'active' : ''}`}
             onClick={() => { setSection('dashboard'); setError(''); setSuccess(''); }}
           >
             <i className="fas fa-chart-line"></i> Control General
           </button>
-          <button 
+          <button
             className={`tps-menu-item ${section === 'firma_settings' ? 'active' : ''}`}
             onClick={() => { setSection('firma_settings'); setError(''); setSuccess(''); }}
           >
             <i className="fas fa-signature"></i> Mi Firma Digital
           </button>
-          <button 
+          <button
             className="tps-menu-item"
             style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.08)' }}
             onClick={() => navigate('/tutor/dashboard')}
@@ -476,14 +476,12 @@ export default function TutorPasantias() {
             <i className="fas fa-home"></i> Regresar al Portal
           </button>
         </nav>
-        <div className="tps-sidebar-footer">
-          <div style={{ fontSize: '0.75rem', opacity: 0.5 }}>FET Pasantías v2.0</div>
-        </div>
+        
       </aside>
 
       {/* MAIN CONTAINER */}
       <main className="tps-main">
-        
+
         {/* HEADER */}
         <header className="tps-header">
           <div className="tps-header-left">
@@ -505,21 +503,21 @@ export default function TutorPasantias() {
 
         {/* CONTENT */}
         <div className="tps-content">
-          
+
           {/* FEEDBACK BANNERS */}
           {error && (
-            <div style={{ 
-              backgroundColor: '#fee2e2', borderLeft: '4px solid #ef4444', color: '#b91c1c', 
-              padding: '1rem', borderRadius: '0.375rem', marginBottom: '1.5rem', fontWeight: 500 
+            <div style={{
+              backgroundColor: '#fee2e2', borderLeft: '4px solid #ef4444', color: '#b91c1c',
+              padding: '1rem', borderRadius: '0.375rem', marginBottom: '1.5rem', fontWeight: 500
             }}>
               <i className="fas fa-exclamation-triangle"></i> {error}
             </div>
           )}
 
           {success && (
-            <div style={{ 
-              backgroundColor: '#dcfce7', borderLeft: '4px solid #10b981', color: '#15803d', 
-              padding: '1rem', borderRadius: '0.375rem', marginBottom: '1.5rem', fontWeight: 500 
+            <div style={{
+              backgroundColor: '#dcfce7', borderLeft: '4px solid #10b981', color: '#15803d',
+              padding: '1rem', borderRadius: '0.375rem', marginBottom: '1.5rem', fontWeight: 500
             }}>
               <i className="fas fa-check-circle"></i> {success}
             </div>
@@ -565,14 +563,14 @@ export default function TutorPasantias() {
                 <div className="tps-card-header">
                   <h3>Pasantes Asignados</h3>
                   <div className="tps-filters">
-                    <input 
-                      type="text" 
-                      placeholder="Buscar por estudiante o empresa..." 
+                    <input
+                      type="text"
+                      placeholder="Buscar por estudiante o empresa..."
                       className="tps-search-input"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />
-                    <select 
+                    <select
                       className="tps-select"
                       value={filterEstado}
                       onChange={(e) => setFilterEstado(e.target.value)}
@@ -617,13 +615,13 @@ export default function TutorPasantias() {
                             </td>
                             <td>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{ 
-                                  background: '#e2e8f0', width: '80px', height: '6px', 
-                                  borderRadius: '3px', overflow: 'hidden' 
+                                <div style={{
+                                  background: '#e2e8f0', width: '80px', height: '6px',
+                                  borderRadius: '3px', overflow: 'hidden'
                                 }}>
-                                  <div style={{ 
-                                    background: 'var(--tps-primary)', height: '100%', 
-                                    width: `${Math.min(100, (p.horas_aprobadas / 384) * 100)}%` 
+                                  <div style={{
+                                    background: 'var(--tps-primary)', height: '100%',
+                                    width: `${Math.min(100, (p.horas_aprobadas / 384) * 100)}%`
                                   }}></div>
                                 </div>
                                 <span style={{ fontWeight: 'bold' }}>{p.horas_aprobadas} / 384 hs</span>
@@ -631,7 +629,7 @@ export default function TutorPasantias() {
                             </td>
                             <td>{estadoBadge(p.estado)}</td>
                             <td style={{ textAlign: 'right' }}>
-                              <button 
+                              <button
                                 className="tps-btn tps-btn-primary"
                                 onClick={() => verDetallePasantia(p.id)}
                               >
@@ -665,23 +663,23 @@ export default function TutorPasantias() {
                 </p>
 
                 {firmaTutorUrl ? (
-                  <div style={{ 
-                    textAlign: 'center', border: '1px dashed var(--tps-border)', 
-                    padding: '1.5rem', borderRadius: 'var(--tps-radius)', marginBottom: '1.5rem', 
-                    background: '#f8fafc' 
+                  <div style={{
+                    textAlign: 'center', border: '1px dashed var(--tps-border)',
+                    padding: '1.5rem', borderRadius: 'var(--tps-radius)', marginBottom: '1.5rem',
+                    background: '#f8fafc'
                   }}>
                     <label style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'var(--tps-text-muted)', display: 'block', marginBottom: '0.5rem' }}>FIRMA ACTUAL REGISTRADA:</label>
-                    <img 
-                      src={`http://localhost:8000/uploads/pasantias/firmas/${firmaTutorUrl}`} 
-                      alt="Firma Tutor" 
+                    <img
+                      src={`http://localhost:8000/uploads/pasantias/firmas/${firmaTutorUrl}`}
+                      alt="Firma Tutor"
                       style={{ maxHeight: '100px', objectFit: 'contain' }}
                       onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   </div>
                 ) : (
-                  <div style={{ 
+                  <div style={{
                     textAlign: 'center', border: '1px dashed #ef4444', color: '#b91c1c',
-                    padding: '1.5rem', borderRadius: 'var(--tps-radius)', marginBottom: '1.5rem', 
+                    padding: '1.5rem', borderRadius: 'var(--tps-radius)', marginBottom: '1.5rem',
                     background: '#fee2e2', fontSize: '0.9rem', fontWeight: 600
                   }}>
                     <i className="fas fa-signature"></i> Aún no has registrado tu firma digital. Sube una a continuación.
@@ -690,15 +688,15 @@ export default function TutorPasantias() {
 
                 <form onSubmit={handleSubirFirmaTutor} className="tps-form-group">
                   <label>Seleccionar Archivo de Imagen:</label>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
+                  <input
+                    type="file"
+                    accept="image/*"
                     onChange={(e) => setFirmaTutorFile(e.target.files[0])}
                     style={{ padding: '0.5rem', border: '1px solid var(--tps-border)', borderRadius: '0.375rem' }}
                   />
-                  <button 
-                    type="submit" 
-                    className="tps-btn tps-btn-primary" 
+                  <button
+                    type="submit"
+                    className="tps-btn tps-btn-primary"
                     style={{ marginTop: '1rem', alignSelf: 'flex-start' }}
                     disabled={uploadingFirma || !firmaTutorFile}
                   >
@@ -712,7 +710,7 @@ export default function TutorPasantias() {
           {/* SECTION: DETALLE DE PASANTÍA */}
           {section === 'detalle' && detalle && (
             <div className="tps-detail-grid">
-              
+
               {/* Tarjeta lateral con perfil */}
               <div className="tps-sidebar-card">
                 <div className="tps-avatar-circle">
@@ -758,14 +756,14 @@ export default function TutorPasantias() {
                       const c1 = evaluaciones.find(x => x.corte === 1);
                       const c2 = evaluaciones.find(x => x.corte === 2);
                       const displayNota = detalle.nota_final || (c1 && c2 ? (parseFloat(c1.nota_corte) * 0.40) + (parseFloat(c2.nota_corte) * 0.60) : null);
-                      
+
                       if (displayNota !== null) {
                         const val = parseFloat(displayNota);
                         return (
-                          <span style={{ 
-                            fontSize: '1.2rem', 
-                            fontWeight: 900, 
-                            color: val >= 3.5 ? '#16a34a' : '#dc2626' 
+                          <span style={{
+                            fontSize: '1.2rem',
+                            fontWeight: 900,
+                            color: val >= 3.5 ? '#16a34a' : '#dc2626'
                           }}>
                             {val.toFixed(2)} {val >= 3.5 ? '🎉 (Aprobado)' : '❌ (Reprobado)'}
                           </span>
@@ -785,10 +783,10 @@ export default function TutorPasantias() {
 
               {/* Panel principal de navegación */}
               <div style={{ flex: 1 }}>
-                
+
                 {/* Botón Volver */}
-                <button 
-                  className="tps-btn tps-btn-outline" 
+                <button
+                  className="tps-btn tps-btn-outline"
                   onClick={() => { setSection('dashboard'); setDetalle(null); setError(''); setSuccess(''); }}
                   style={{ marginBottom: '1.5rem' }}
                 >
@@ -810,9 +808,9 @@ export default function TutorPasantias() {
                     <div className="tps-card-header">
                       <h3>Acta de Inicio (PE-PCA-F-005)</h3>
                       {detalle.acta_inicio ? (
-                        <a 
+                        <a
                           href={`http://localhost:8000/api/pasantias/${detalle.id}/pdf/acta`}
-                          target="_blank" 
+                          target="_blank"
                           rel="noreferrer"
                           className="tps-btn tps-btn-success"
                         >
@@ -858,73 +856,73 @@ export default function TutorPasantias() {
                           </div>
                         </div>
                       ) : (
-                      <form onSubmit={handleGuardarActa}>
-                        <p style={{ color: 'var(--tps-text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                          Como Docente Tutor Académico, debes diligenciar y registrar los datos iniciales de la reunión de concertación de prácticas para generar el Acta de Inicio oficial (PE-PCA-F-005).
-                        </p>
+                        <form onSubmit={handleGuardarActa}>
+                          <p style={{ color: 'var(--tps-text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                            Como Docente Tutor Académico, debes diligenciar y registrar los datos iniciales de la reunión de concertación de prácticas para generar el Acta de Inicio oficial (PE-PCA-F-005).
+                          </p>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
-                          <div className="tps-meta-item">
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Fecha de Reunión</label>
-                            <input 
-                              type="date" 
-                              className="tps-input" 
-                              value={actaForm.fecha} 
-                              onChange={(e) => setActaForm({ ...actaForm, fecha: e.target.value })} 
-                              style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
-                              required 
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                            <div className="tps-meta-item">
+                              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Fecha de Reunión</label>
+                              <input
+                                type="date"
+                                className="tps-input"
+                                value={actaForm.fecha}
+                                onChange={(e) => setActaForm({ ...actaForm, fecha: e.target.value })}
+                                style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                                required
+                              />
+                            </div>
+                            <div className="tps-meta-item">
+                              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Hora de Reunión</label>
+                              <input
+                                type="time"
+                                className="tps-input"
+                                value={actaForm.hora}
+                                onChange={(e) => setActaForm({ ...actaForm, hora: e.target.value })}
+                                style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          <div className="tps-meta-item" style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Asistentes a la firma</label>
+                            <textarea
+                              className="tps-textarea"
+                              rows={3}
+                              placeholder="Nombre del estudiante, tutor y otros asistentes..."
+                              value={actaForm.asistentes}
+                              onChange={(e) => setActaForm({ ...actaForm, asistentes: e.target.value })}
+                              style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontFamily: 'inherit' }}
+                              required
                             />
                           </div>
-                          <div className="tps-meta-item">
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Hora de Reunión</label>
-                            <input 
-                              type="time" 
-                              className="tps-input" 
-                              value={actaForm.hora} 
-                              onChange={(e) => setActaForm({ ...actaForm, hora: e.target.value })} 
-                              style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #cbd5e1' }}
-                              required 
-                            />
+
+                          <div className="tps-meta-item" style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Orden del Día Estándar</label>
+                            <ul style={{ paddingLeft: '1.25rem', fontSize: '0.9rem', color: '#475569' }}>
+                              {actaForm.ordenDiaList.map((x, i) => <li key={i} style={{ marginBottom: '0.25rem' }}>{x}</li>)}
+                            </ul>
                           </div>
-                        </div>
 
-                        <div className="tps-meta-item" style={{ marginBottom: '1.5rem' }}>
-                          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Asistentes a la firma</label>
-                          <textarea 
-                            className="tps-textarea" 
-                            rows={3} 
-                            placeholder="Nombre del estudiante, tutor y otros asistentes..." 
-                            value={actaForm.asistentes} 
-                            onChange={(e) => setActaForm({ ...actaForm, asistentes: e.target.value })} 
-                            style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #cbd5e1', fontFamily: 'inherit' }}
-                            required 
-                          />
-                        </div>
-
-                        <div className="tps-meta-item" style={{ marginBottom: '1.5rem' }}>
-                          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Orden del Día Estándar</label>
-                          <ul style={{ paddingLeft: '1.25rem', fontSize: '0.9rem', color: '#475569' }}>
-                            {actaForm.ordenDiaList.map((x, i) => <li key={i} style={{ marginBottom: '0.25rem' }}>{x}</li>)}
-                          </ul>
-                        </div>
-
-                        <div className="tps-meta-item" style={{ marginBottom: '2rem' }}>
-                          <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Desarrollo y Acuerdos de Iniciación Estándar</label>
-                          <ol style={{ paddingLeft: '1.25rem', fontSize: '0.9rem', color: '#475569' }}>
-                            {actaForm.desarrolloList.map((x, i) => <li key={i} style={{ marginBottom: '0.5rem' }}>{x}</li>)}
-                          </ol>
-                        </div>
-
-                        {!firmaTutorUrl ? (
-                          <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '1rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600 }}>
-                            <i className="fas fa-lock"></i> Debes tener registrada tu firma digital en tu perfil de tutor antes de poder guardar y firmar el Acta de Inicio institucional.
+                          <div className="tps-meta-item" style={{ marginBottom: '2rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Desarrollo y Acuerdos de Iniciación Estándar</label>
+                            <ol style={{ paddingLeft: '1.25rem', fontSize: '0.9rem', color: '#475569' }}>
+                              {actaForm.desarrolloList.map((x, i) => <li key={i} style={{ marginBottom: '0.5rem' }}>{x}</li>)}
+                            </ol>
                           </div>
-                        ) : (
-                          <button type="submit" className="tps-btn tps-btn-primary" style={{ padding: '0.75rem 2rem' }}>
-                            <i className="fas fa-save"></i> Guardar y Firmar Acta de Inicio
-                          </button>
-                        )}
-                      </form>
+
+                          {!firmaTutorUrl ? (
+                            <div style={{ backgroundColor: '#fee2e2', color: '#991b1b', padding: '1rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 600 }}>
+                              <i className="fas fa-lock"></i> Debes tener registrada tu firma digital en tu perfil de tutor antes de poder guardar y firmar el Acta de Inicio institucional.
+                            </div>
+                          ) : (
+                            <button type="submit" className="tps-btn tps-btn-primary" style={{ padding: '0.75rem 2rem' }}>
+                              <i className="fas fa-save"></i> Guardar y Firmar Acta de Inicio
+                            </button>
+                          )}
+                        </form>
                       )}
                     </div>
                   </div>
@@ -936,9 +934,9 @@ export default function TutorPasantias() {
                     <div className="tps-card-header">
                       <h3>Plan de Trabajo de Prácticas (PM-PSO-F-002)</h3>
                       {detalle.plan_trabajo ? (
-                        <a 
+                        <a
                           href={`http://localhost:8000/api/pasantias/${detalle.id}/pdf/plan`}
-                          target="_blank" 
+                          target="_blank"
                           rel="noreferrer"
                           className="tps-btn tps-btn-success"
                         >
@@ -970,18 +968,18 @@ export default function TutorPasantias() {
 
                             {detalle.firma_supervisor ? (
                               <div style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '0.75rem', borderRadius: '4px', display: 'inline-block' }}>
-                                <img 
-                                  src={`http://localhost:8000/uploads/pasantias/firmas/${detalle.firma_supervisor}`} 
-                                  alt="Firma Supervisor" 
+                                <img
+                                  src={`http://localhost:8000/uploads/pasantias/firmas/${detalle.firma_supervisor}`}
+                                  alt="Firma Supervisor"
                                   style={{ maxHeight: '60px' }}
                                 />
                                 <div style={{ fontSize: '0.7rem', color: 'var(--tps-text-muted)', textAlign: 'center' }}>Firma cargada</div>
                               </div>
                             ) : (
                               <form onSubmit={handleSubirFirmaSupervisor} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                                <input 
-                                  type="file" 
-                                  accept="image/*" 
+                                <input
+                                  type="file"
+                                  accept="image/*"
                                   onChange={(e) => setFirmaSupervisorFile(e.target.files[0])}
                                   style={{ padding: '0.25rem', border: '1px solid var(--tps-border)', borderRadius: '4px', background: '#fff' }}
                                 />
@@ -1027,7 +1025,7 @@ export default function TutorPasantias() {
                   <div className="tps-card">
                     <div className="tps-card-header">
                       <h3>Planilla de Bitácoras de Asistencia</h3>
-                      <a 
+                      <a
                         href={`http://localhost:8000/api/pasantias/${detalle.id}/excel/asistencia`}
                         className="tps-btn tps-btn-success"
                       >
@@ -1058,9 +1056,9 @@ export default function TutorPasantias() {
                                 <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.85rem', color: 'var(--tps-text-muted)' }}>
                                   <span><strong>Horas:</strong> {asist.horas} hs.</span>
                                   {asist.evidencia ? (
-                                    <a 
-                                      href={`http://localhost:8000/uploads/pasantias/evidencias/${asist.evidencia}`} 
-                                      target="_blank" 
+                                    <a
+                                      href={`http://localhost:8000/uploads/pasantias/evidencias/${asist.evidencia}`}
+                                      target="_blank"
                                       rel="noreferrer"
                                       style={{ color: 'var(--tps-secondary)', fontWeight: 600 }}
                                     >
@@ -1077,22 +1075,22 @@ export default function TutorPasantias() {
 
                               {asist.estado === 'pendiente' && (
                                 <div className="tps-tl-actions">
-                                  <button 
-                                    className="tps-btn tps-btn-primary" 
-                                    onClick={() => { 
-                                      setModalAsistencia(asist); 
-                                      setModalEstado('aprobado'); 
-                                      setModalComentario(''); 
+                                  <button
+                                    className="tps-btn tps-btn-primary"
+                                    onClick={() => {
+                                      setModalAsistencia(asist);
+                                      setModalEstado('aprobado');
+                                      setModalComentario('');
                                     }}
                                   >
                                     Aprobar e Incrustar Firma
                                   </button>
-                                  <button 
-                                    className="tps-btn tps-btn-danger" 
-                                    onClick={() => { 
-                                      setModalAsistencia(asist); 
-                                      setModalEstado('corregir'); 
-                                      setModalComentario(''); 
+                                  <button
+                                    className="tps-btn tps-btn-danger"
+                                    onClick={() => {
+                                      setModalAsistencia(asist);
+                                      setModalEstado('corregir');
+                                      setModalComentario('');
                                     }}
                                   >
                                     Rechazar / Solicitar Corrección
@@ -1118,8 +1116,8 @@ export default function TutorPasantias() {
                     <div className="tps-card-header">
                       <h3>Seguimiento Cuantitativo del Estudiante (Anexo 2)</h3>
                       <div className="tps-filters">
-                        <select 
-                          className="tps-select" 
+                        <select
+                          className="tps-select"
                           value={corteEval}
                           onChange={(e) => cargarEvaluacionCorte(e.target.value)}
                           style={{ fontWeight: 'bold', color: 'var(--tps-primary)' }}
@@ -1129,9 +1127,9 @@ export default function TutorPasantias() {
                         </select>
 
                         {evaluaciones.some(x => x.corte === parseInt(corteEval)) && (
-                          <a 
+                          <a
                             href={`http://localhost:8000/api/pasantias/${detalle.id}/pdf/evaluacion/${corteEval}`}
-                            target="_blank" 
+                            target="_blank"
                             rel="noreferrer"
                             className="tps-btn tps-btn-success"
                           >
@@ -1171,10 +1169,10 @@ export default function TutorPasantias() {
                                   ['nota_act_9', 'Puntualidad y cumplimiento']
                                 ].map(([field, label], i) => (
                                   <div key={field} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '0.8rem' }}>{i+1}. {label}</span>
-                                    <input 
-                                      type="text" 
-                                      className="tps-eval-input" 
+                                    <span style={{ fontSize: '0.8rem' }}>{i + 1}. {label}</span>
+                                    <input
+                                      type="text"
+                                      className="tps-eval-input"
                                       placeholder="5.0"
                                       value={evalForm[field]}
                                       onChange={(e) => handleGradeChange(field, e.target.value)}
@@ -1204,10 +1202,10 @@ export default function TutorPasantias() {
                                   ['nota_proc_9', 'Organizar y gestionar']
                                 ].map(([field, label], i) => (
                                   <div key={field} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '0.8rem' }}>{i+1}. {label}</span>
-                                    <input 
-                                      type="text" 
-                                      className="tps-eval-input" 
+                                    <span style={{ fontSize: '0.8rem' }}>{i + 1}. {label}</span>
+                                    <input
+                                      type="text"
+                                      className="tps-eval-input"
                                       placeholder="5.0"
                                       value={evalForm[field]}
                                       onChange={(e) => handleGradeChange(field, e.target.value)}
@@ -1232,9 +1230,9 @@ export default function TutorPasantias() {
                                 ].map(([field, label]) => (
                                   <div key={field} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '0.8rem' }}>{label}</span>
-                                    <input 
-                                      type="text" 
-                                      className="tps-eval-input" 
+                                    <input
+                                      type="text"
+                                      className="tps-eval-input"
                                       placeholder="5.0"
                                       value={evalForm[field]}
                                       onChange={(e) => handleGradeChange(field, e.target.value)}
@@ -1250,9 +1248,9 @@ export default function TutorPasantias() {
                                 ].map(([field, label]) => (
                                   <div key={field} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '0.8rem' }}>{label}</span>
-                                    <input 
-                                      type="text" 
-                                      className="tps-eval-input" 
+                                    <input
+                                      type="text"
+                                      className="tps-eval-input"
                                       placeholder="5.0"
                                       value={evalForm[field]}
                                       onChange={(e) => handleGradeChange(field, e.target.value)}
@@ -1268,9 +1266,9 @@ export default function TutorPasantias() {
                                 ].map(([field, label]) => (
                                   <div key={field} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span style={{ fontSize: '0.8rem' }}>{label}</span>
-                                    <input 
-                                      type="text" 
-                                      className="tps-eval-input" 
+                                    <input
+                                      type="text"
+                                      className="tps-eval-input"
                                       placeholder="5.0"
                                       value={evalForm[field]}
                                       onChange={(e) => handleGradeChange(field, e.target.value)}
@@ -1290,10 +1288,10 @@ export default function TutorPasantias() {
                       </table>
 
                       {/* Caja de Ponderación Final */}
-                      <div style={{ 
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                        background: '#dcfce7', border: '1px solid #86efac', 
-                        padding: '1.25rem', borderRadius: 'var(--tps-radius)', marginBottom: '1.5rem' 
+                      <div style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        background: '#dcfce7', border: '1px solid #86efac',
+                        padding: '1.25rem', borderRadius: 'var(--tps-radius)', marginBottom: '1.5rem'
                       }}>
                         <div>
                           <h4 style={{ color: '#166534', margin: 0, fontSize: '1rem', fontWeight: 800 }}>PONDERADO DEFINITIVO DEL CORTE:</h4>
@@ -1306,7 +1304,7 @@ export default function TutorPasantias() {
 
                       <div className="tps-form-group">
                         <label>Observaciones o Recomendaciones del Tutor Académico:</label>
-                        <textarea 
+                        <textarea
                           className="tps-textarea"
                           placeholder="Escriba comentarios específicos para guiar al estudiante..."
                           value={evalForm.comentarios}
@@ -1340,13 +1338,13 @@ export default function TutorPasantias() {
                       </p>
 
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                        
+
                         <div className="tps-card" style={{ padding: '1.5rem', border: '1px solid var(--tps-border)', marginBottom: 0 }}>
                           <h4 style={{ margin: '0 0 0.5rem 0' }}><i className="fas fa-file-pdf" style={{ color: '#ef4444' }}></i> Acta de Inicio</h4>
                           <p style={{ fontSize: '0.8rem', color: 'var(--tps-text-muted)', margin: '0 0 1rem 0' }}>Formato institucional de apertura y firma del tutor y practicante.</p>
-                          <a 
+                          <a
                             href={`http://localhost:8000/api/pasantias/${detalle.id}/pdf/acta`}
-                            target="_blank" 
+                            target="_blank"
                             rel="noreferrer"
                             className="tps-btn tps-btn-outline"
                             style={{ width: '100%', justifyContent: 'center' }}
@@ -1358,9 +1356,9 @@ export default function TutorPasantias() {
                         <div className="tps-card" style={{ padding: '1.5rem', border: '1px solid var(--tps-border)', marginBottom: 0 }}>
                           <h4 style={{ margin: '0 0 0.5rem 0' }}><i className="fas fa-file-pdf" style={{ color: '#ef4444' }}></i> Plan de Trabajo</h4>
                           <p style={{ fontSize: '0.8rem', color: 'var(--tps-text-muted)', margin: '0 0 1rem 0' }}>Formato con las actividades firmadas por estudiante, tutor y supervisor de empresa.</p>
-                          <a 
+                          <a
                             href={`http://localhost:8000/api/pasantias/${detalle.id}/pdf/plan`}
-                            target="_blank" 
+                            target="_blank"
                             rel="noreferrer"
                             className="tps-btn tps-btn-outline"
                             style={{ width: '100%', justifyContent: 'center' }}
@@ -1372,7 +1370,7 @@ export default function TutorPasantias() {
                         <div className="tps-card" style={{ padding: '1.5rem', border: '1px solid var(--tps-border)', marginBottom: 0 }}>
                           <h4 style={{ margin: '0 0 0.5rem 0' }}><i className="fas fa-file-excel" style={{ color: '#10b981' }}></i> Seguimiento Asistencias</h4>
                           <p style={{ fontSize: '0.8rem', color: 'var(--tps-text-muted)', margin: '0 0 1rem 0' }}>Planilla completa de bitácoras y horas aprobadas semanales exportada a Excel.</p>
-                          <a 
+                          <a
                             href={`http://localhost:8000/api/pasantias/${detalle.id}/excel/asistencia`}
                             className="tps-btn tps-btn-outline"
                             style={{ width: '100%', justifyContent: 'center' }}
@@ -1406,8 +1404,8 @@ export default function TutorPasantias() {
             <div className="tps-modal-body">
               <div className="tps-form-group">
                 <label>Estado del Reporte Semanal:</label>
-                <select 
-                  className="tps-select" 
+                <select
+                  className="tps-select"
                   value={modalEstado}
                   onChange={(e) => setModalEstado(e.target.value)}
                   style={{ width: '100%' }}
@@ -1419,7 +1417,7 @@ export default function TutorPasantias() {
 
               <div className="tps-form-group">
                 <label>Comentarios / Retroalimentación:</label>
-                <textarea 
+                <textarea
                   className="tps-textarea"
                   placeholder={modalEstado === 'aprobado' ? '¡Excelente trabajo! Continúa así.' : 'Indica claramente qué debe corregir el estudiante en su bitácora semanal...'}
                   value={modalComentario}
@@ -1429,7 +1427,7 @@ export default function TutorPasantias() {
             </div>
             <div className="tps-modal-footer">
               <button className="tps-btn tps-btn-outline" onClick={() => setModalAsistencia(null)}>Cancelar</button>
-              <button 
+              <button
                 className={`tps-btn ${modalEstado === 'aprobado' ? 'tps-btn-primary' : 'tps-btn-danger'}`}
                 onClick={submitCalificarAsistencia}
                 disabled={modalLoading}
