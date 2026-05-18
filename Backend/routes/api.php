@@ -21,6 +21,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/estudiante/proyecto/mensajes',          [App\Http\Controllers\Estudiante\EstudianteProyectoController::class, 'getMensajes']);
     Route::post('/estudiante/proyecto/mensajes',         [App\Http\Controllers\Estudiante\EstudianteProyectoController::class, 'sendMensaje']);
 
+    // ESTUDIANTE: Panel de Pasantías
+    Route::get('/estudiante/pasantia',                   [App\Http\Controllers\Estudiante\EstudiantePasantiaController::class, 'index']);
+    Route::post('/estudiante/pasantia/subir-firma',      [App\Http\Controllers\Estudiante\EstudiantePasantiaController::class, 'subirFirma']);
+    Route::post('/estudiante/pasantia/guardar-acta',     [App\Http\Controllers\Estudiante\EstudiantePasantiaController::class, 'guardarActa']);
+    Route::post('/estudiante/pasantia/guardar-plan',     [App\Http\Controllers\Estudiante\EstudiantePasantiaController::class, 'guardarPlan']);
+    Route::post('/estudiante/pasantia/asistencias',      [App\Http\Controllers\Estudiante\EstudiantePasantiaController::class, 'subirAsistencia']);
+    Route::delete('/estudiante/pasantia/asistencias/{id}', [App\Http\Controllers\Estudiante\EstudiantePasantiaController::class, 'eliminarAsistencia']);
+
     // ADMINISTRADOR
     // ... tus otras rutas ...
     Route::get('/admin/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index']);
@@ -75,6 +83,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tutor/proyectos/{id}/init-avances', [App\Http\Controllers\Tutor\TutorProyectosController::class, 'initAvances']);
     Route::get('/tutor/proyectos/{id}/mensajes',      [App\Http\Controllers\Tutor\TutorProyectosController::class, 'getMensajes']);
     Route::post('/tutor/proyectos/{id}/mensajes',     [App\Http\Controllers\Tutor\TutorProyectosController::class, 'sendMensaje']);
+    Route::post('/tutor/proyectos/{id}/subir-acta',    [App\Http\Controllers\Tutor\TutorProyectosController::class, 'subirActa']);
+
+    // Panel Pasantías del Tutor
+    Route::get('/tutor/pasantias',                                   [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'index']);
+    Route::get('/tutor/pasantias/{id}',                               [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'show']);
+    Route::post('/tutor/pasantias/subir-firma',                       [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'subirFirma']);
+    Route::post('/tutor/pasantias/{id}/subir-firma-supervisor',       [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'subirFirmaSupervisor']);
+    Route::post('/tutor/pasantias/asistencias/calificar',             [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'calificarAsistencia']);
+    Route::post('/tutor/pasantias/evaluaciones/calificar',            [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'calificarEvaluacion']);
+    Route::post('/tutor/pasantias/{id}/guardar-acta',                 [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'guardarActa']);
 
 
     Route::get('/admin/aprobaciones', [AprobacionController::class, 'index']);
@@ -83,3 +101,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/aprobaciones/{id}/rechazar', [AprobacionController::class, 'rechazar']);
 
 });
+
+// --- RUTAS PÚBLICAS DE EXPORTACIÓN Y GENERACIÓN (Para target="_blank") ---
+Route::get('/pasantias/{id}/pdf/acta',                 [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'generarActaHTML']);
+Route::get('/pasantias/{id}/pdf/plan',                 [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'generarPlanHTML']);
+Route::get('/pasantias/{id}/pdf/evaluacion/{corte}',   [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'generarEvaluacionHTML']);
+Route::get('/pasantias/{id}/excel/asistencia',         [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'generarExcelAsistencia']);
+

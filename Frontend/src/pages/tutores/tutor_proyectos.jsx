@@ -54,6 +54,9 @@ export default function TutorProyectos() {
   const [modalNota, setModalNota] = useState('');
   const [modalComentario, setModalComentario] = useState('');
   const [modalLoading, setModalLoading] = useState(false);
+  // Acta de finalización
+  const [actaFile, setActaFile] = useState(null);
+  const [actaLoading, setActaLoading] = useState(false);
   // Chat
   const [chatProyecto, setChatProyecto] = useState(null);
   const [mensajes, setMensajes] = useState([]);
@@ -159,8 +162,35 @@ export default function TutorProyectos() {
         if (detalle) verDetalle(detalle.id);
         setTimeout(() => setSuccess(''), 3000);
       }
-    } catch { setError('Error al calificar el avance.'); }
-    finally { setModalLoading(false); }
+    } catch (e) {
+      setError(e.response?.data?.message || 'Error al calificar el avance.');
+    } finally { setModalLoading(false); }
+  };
+
+  // Calificar desde formulario directo (lista de pendientes)
+  const calificar = async (e, avanceId) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    const form = e.target;
+    const fd = new FormData(form);
+    const estado = 'aprobado';
+    const nota = fd.get('nota');
+    const comentario = fd.get('comentario');
+
+    try {
+      const r = await axios.post(`${API}/tutor/proyectos/calificar`, {
+        avance_id: avanceId, estado, nota, comentario
+      }, getHeaders());
+      if (r.data.success) {
+        setSuccess('Avance calificado correctamente.');
+        loadData();
+        if (detalle) verDetalle(detalle.id);
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (e) {
+      setError(e.response?.data?.message || 'Error al calificar el avance.');
+    }
   };
 
   // Inicializar los 4 avances de un proyecto
@@ -176,6 +206,39 @@ export default function TutorProyectos() {
         setError(r.data.message || 'No se pudieron inicializar.');
       }
     } catch { setError('Error al inicializar avances.'); }
+  };
+
+  // Subir el acta de finalización de un proyecto
+  const handleUploadActa = async (e) => {
+    e.preventDefault();
+    if (!actaFile || !detalle) return;
+    setActaLoading(true);
+    setError('');
+    setSuccess('');
+
+    const fd = new FormData();
+    fd.append('archivo_acta', actaFile);
+
+    try {
+      const r = await axios.post(`${API}/tutor/proyectos/${detalle.id}/subir-acta`, fd, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (r.data.success) {
+        setSuccess(r.data.message);
+        setActaFile(null);
+        // Recargar datos generales y los detalles del proyecto actual
+        loadData();
+        verDetalle(detalle.id);
+        setTimeout(() => setSuccess(''), 4000);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error al subir el acta.');
+    } finally {
+      setActaLoading(false);
+    }
   };
 
   const navTo = (s) => {
@@ -368,6 +431,62 @@ export default function TutorProyectos() {
                     </div>
                   </div>
 
+                  {/* SECCIÓN DEL ACTA DE FINALIZACIÓN */}
+                  {detalle.estado === 'finalizado' ? (
+                    <div style={{
+                      marginTop: '1.5rem',
+                      padding: '1.25rem',
+                      background: 'rgba(3,151,8,.06)',
+                      border: '1px solid rgba(3,151,8,.2)',
+                      borderRadius: '0.5rem'
+                    }}>
+                      <h5 style={{ color: '#039708', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, fontWeight: 700 }}>
+                        <i className="fas fa-check-circle"></i> ¡Proyecto Finalizado!
+                      </h5>
+                      <p style={{ margin: '0.5rem 0 1rem', fontSize: '0.9rem', color: '#334155' }}>
+                        Este proyecto ha concluido exitosamente y se ha cargado el Acta de Finalización correspondiente.
+                      </p>
+                      {detalle.archivo_acta && (
+                        <a className="tp-btn tp-btn-success" href={`http://localhost:8000/uploads/proyectos/actas/${detalle.archivo_acta}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+                          <i className="fas fa-file-download"></i> Descargar Acta de Finalización
+                        </a>
+                      )}
+                    </div>
+                  ) : (detalle.avances?.filter(a => a.estado === 'aprobado').length === 4) ? (
+                    <div style={{
+                      marginTop: '1.5rem',
+                      padding: '1.25rem',
+                      background: 'rgba(2,132,199,.06)',
+                      border: '1px solid rgba(2,132,199,.2)',
+                      borderRadius: '0.5rem'
+                    }}>
+                      <h5 style={{ color: 'var(--tp-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0, fontWeight: 700 }}>
+                        <i className="fas fa-file-signature"></i> Finalizar Proceso y Cargar Acta
+                      </h5>
+                      <p style={{ margin: '0.5rem 0 1rem', fontSize: '0.9rem', color: '#334155' }}>
+                        Todos los avances han sido aprobados con éxito. Sube el Acta de Finalización en formato PDF o Imagen para finalizar formalmente este proyecto.
+                      </p>
+                      <form onSubmit={handleUploadActa} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          required
+                          style={{ fontSize: '0.85rem' }}
+                          onChange={e => setActaFile(e.target.files[0])}
+                        />
+                        <button
+                          type="submit"
+                          disabled={actaLoading}
+                          className="tp-btn tp-btn-primary"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
+                        >
+                          {actaLoading ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-upload"></i>}
+                          Subir Acta y Finalizar
+                        </button>
+                      </form>
+                    </div>
+                  ) : null}
+
                   {/* Timeline avances con botón calificar */}
                   <div style={{ marginTop: '1.5rem' }}>
                     <h5 style={{ color: 'var(--tp-primary)', marginBottom: '1rem' }}>Avances del Proyecto</h5>
@@ -463,7 +582,9 @@ export default function TutorProyectos() {
                                     { avance_id: av.id, estado: 'corregir', nota: fd.get('nota'), comentario: fd.get('comentario') },
                                     getHeaders());
                                   loadData();
-                                } catch { setError('Error al calificar.'); }
+                                } catch (e) {
+                                  setError(e.response?.data?.message || 'Error al calificar.');
+                                }
                               }}>
                               <i className="fas fa-redo"></i> Solicitar Corrección
                             </button>

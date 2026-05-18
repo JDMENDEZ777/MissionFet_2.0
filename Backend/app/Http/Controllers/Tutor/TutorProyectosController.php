@@ -197,11 +197,21 @@ class TutorProyectosController extends Controller
     {
         $tutor_id = $this->getTutorId($request);
 
+        // Sanitizar la nota: reemplazar coma por punto
+        if ($request->has('nota') && is_string($request->nota)) {
+            $notaSanitizada = str_replace(',', '.', $request->nota);
+            $request->merge(['nota' => $notaSanitizada]);
+        }
+
         $request->validate([
             'avance_id'  => 'required|integer',
             'estado'     => 'required|in:aprobado,corregir',
             'nota'       => 'nullable|numeric|min:0|max:5',
             'comentario' => 'nullable|string',
+        ], [
+            'nota.numeric' => 'La nota debe ser un número válido.',
+            'nota.min' => 'La nota mínima es 0.',
+            'nota.max' => 'La nota máxima es 5.0 (si pusiste 50, corrígelo a 5.0).',
         ]);
 
         // Verificar que el avance pertenece a un proyecto del tutor
@@ -286,5 +296,41 @@ class TutorProyectosController extends Controller
         ]);
 
         return response()->json(['success' => true, 'message' => 'Mensaje enviado']);
+    }
+
+    // POST /api/tutor/proyectos/{id}/subir-acta
+    public function subirActa(Request $request, $id)
+    {
+        $tutor_id = $this->getTutorId($request);
+
+        $request->validate([
+            'archivo_acta' => 'required|file|max:10240', // 10MB max (PDF o Imagen)
+        ]);
+
+        $proyecto = DB::table('proyectos')->where('id', $id)->where('tutor_id', $tutor_id)->first();
+        if (!$proyecto) {
+            return response()->json(['success' => false, 'message' => 'No autorizado'], 403);
+        }
+
+        $file = $request->file('archivo_acta');
+        $extension = $file->getClientOriginalExtension();
+        $nombre_base = preg_replace('/[^a-zA-Z0-9_-]/', '_', $proyecto->titulo);
+        $nombre_archivo = "acta_" . $proyecto->id . "_" . $nombre_base . "_" . time() . "." . $extension;
+
+        // Guardar archivo en public/uploads/proyectos/actas
+        $file->move(public_path('uploads/proyectos/actas'), $nombre_archivo);
+
+        // Actualizar base de datos: estado = 'finalizado', archivo_acta = $nombre_archivo
+        DB::table('proyectos')->where('id', $id)->update([
+            'estado' => 'finalizado',
+            'archivo_acta' => $nombre_archivo,
+            'updated_at' => now()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Acta de finalización subida correctamente. El proyecto se ha finalizado.',
+            'archivo_acta' => $nombre_archivo
+        ]);
     }
 }

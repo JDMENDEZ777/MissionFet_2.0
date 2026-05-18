@@ -1,0 +1,310 @@
+:root {
+  --eps-primary: #047857;
+  --eps-primary-hover: #065f46;
+  --eps-primary-light: rgba(4, 120, 87, 0.08);
+  --eps-secondary: #0284c7;
+  --eps-bg: #f8fafc;
+  --eps-card-bg: #ffffff;
+  --eps-text-main: #0f172a;
+  --eps-text-muted: #64748b;
+  --eps-border: #e2e8f0;
+  --eps-radius: 0.75rem;
+  --eps-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.eps-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--eps-bg);
+  font-family: 'Inter', sans-serif;
+  color: var(--eps-text-main);
+}
+
+/* Sidebar */
+.eps-sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, #064e3b 0%, #022c22 100%);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+}
+
+.eps-sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.eps-sidebar-logo {
+  height: 40px;
+  object-fit: contain;
+}
+
+.eps-sidebar-menu {
+  flex: 1;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.eps-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.eps-menu-item:hover, .eps-menu-item.active {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.eps-menu-item.active {
+  border-left: 4px solid #34d399;
+}
+
+/* Main */
+.eps-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.eps-header {
+  height: 70px;
+  background-color: var(--eps-card-bg);
+  border-bottom: 1px solid var(--eps-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+}
+
+.eps-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--eps-bg);
+  border-radius: 2rem;
+  border: 1px solid var(--eps-border);
+}
+
+.eps-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--eps-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.eps-content {
+  padding: 2rem;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Stats */
+.eps-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.eps-stat-card {
+  background-color: var(--eps-card-bg);
+  padding: 1.5rem;
+  border-radius: var(--eps-radius);
+  border: 1px solid var(--eps-border);
+  box-shadow: var(--eps-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eps-stat-card h4 {
+  font-size: 0.8rem;
+  color: var(--eps-text-muted);
+  text-transform: uppercase;
+  margin: 0 0 0.5rem 0;
+}
+
+.eps-stat-card p {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Tab Card */
+.eps-card {
+  background-color: var(--eps-card-bg);
+  border-radius: var(--eps-radius);
+  border: 1px solid var(--eps-border);
+  box-shadow: var(--eps-shadow);
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.eps-card-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--eps-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eps-card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* Form groups */
+.eps-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.eps-form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.eps-input, .eps-textarea {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--eps-border);
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+}
+
+.eps-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.eps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.eps-btn-primary { background-color: var(--eps-primary); color: white; }
+.eps-btn-primary:hover { background-color: var(--eps-primary-hover); }
+
+.eps-btn-outline { border-color: var(--eps-border); color: var(--eps-text-main); background: transparent; }
+.eps-btn-outline:hover { background-color: #f1f5f9; }
+
+.eps-btn-success { background-color: #10b981; color: white; }
+.eps-btn-success:hover { background-color: #059669; }
+
+/* Dynamic List Inputs */
+.eps-row-input {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+/* Badges */
+.eps-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.eps-badge-pending { background-color: #fef3c7; color: #d97706; }
+.eps-badge-process { background-color: #e0f2fe; color: #0284c7; }
+.eps-badge-approved { background-color: #dcfce7; color: #166534; }
+.eps-badge-rejected { background-color: #fee2e2; color: #991b1b; }
+
+/* Timeline */
+.eps-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.eps-tl-item {
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  gap: 1rem;
+}
+
+.eps-tl-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 0.9rem;
+}
+
+.eps-tl-badge.completed { background-color: #10b981; }
+.eps-tl-badge.correction { background-color: #ef4444; }
+.eps-tl-badge.pending { background-color: #f59e0b; }
+
+.eps-tl-content {
+  background-color: var(--eps-card-bg);
+  border: 1px solid var(--eps-border);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+}
+
+/* Table */
+.eps-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.eps-table th {
+  background-color: #f8fafc;
+  padding: 1rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--eps-text-muted);
+  border-bottom: 1px solid var(--eps-border);
+  text-transform: uppercase;
+}
+
+.eps-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--eps-border);
+  font-size: 0.9rem;
+}

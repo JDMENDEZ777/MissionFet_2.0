@@ -220,7 +220,7 @@ export default function EstudianteProyecto() {
     todasCalificadas = false;
   }
   const notaFinal = todasCalificadas ? (sumaNotas / totalAvances).toFixed(1) : 0;
-  const puedeVerNotaFinal = todasCalificadas;
+  const puedeVerNotaFinal = todasCalificadas || proyecto.estado === 'finalizado';
 
   // Render Helpers
   const fmtDT = (d) => new Date(d).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
@@ -517,16 +517,24 @@ export default function EstudianteProyecto() {
                             </tr>
                           </tbody>
                         </table>
-                        {proyecto.documento_adicional ? (
-                          <div style={{textAlign:'center', marginTop:'1.5rem'}}>
-                            <a href={`http://localhost:8000/uploads/proyectos/actas/${proyecto.documento_adicional}`} target="_blank" rel="noreferrer" className="ep-btn" style={{background:'#64748b'}}>
-                              <i className="fas fa-file-pdf"></i> Descargar Acta
-                            </a>
+                        {proyecto.archivo_acta ? (
+                          <div style={{marginTop:'1.5rem', padding:'1rem', background:'rgba(3,151,8,.08)', border:'1px solid rgba(3,151,8,.2)', borderRadius:'0.5rem'}}>
+                            <h5 style={{color:'#039708', margin:'0 0 0.5rem 0', display:'flex', alignItems:'center', gap:'0.4rem', fontWeight: 700}}>
+                              <i className="fas fa-check-circle"></i> ¡Felicidades, Proceso Finalizado!
+                            </h5>
+                            <p style={{margin:'0 0 1rem 0', fontSize:'0.85rem', color:'#475569'}}>
+                              Tu tutor ha cargado el Acta de Finalización y tu proyecto se encuentra oficialmente concluido.
+                            </p>
+                            <div style={{textAlign:'center'}}>
+                              <a href={`http://localhost:8000/uploads/proyectos/actas/${proyecto.archivo_acta}`} target="_blank" rel="noreferrer" className="ep-btn" style={{background:'#039708', color:'white', display:'inline-flex', alignItems:'center', gap:'0.4rem', textDecoration:'none'}}>
+                                <i className="fas fa-file-download"></i> Descargar Acta de Finalización
+                              </a>
+                            </div>
                           </div>
                         ) : (
-                          <div style={{marginTop:'1.5rem',padding:'1rem',background:'rgba(3,151,8,.05)',borderRadius:'0.5rem',display:'flex',gap:'0.5rem',alignItems:'center'}}>
+                          <div style={{marginTop:'1.5rem',padding:'1rem',background:'rgba(2,132,199,.05)',borderRadius:'0.5rem',display:'flex',gap:'0.5rem',alignItems:'center'}}>
                             <i className="fas fa-info-circle" style={{color:'var(--ep-primary)'}}></i>
-                            <p style={{margin:0,fontSize:'0.9rem'}}>El acta aún no ha sido generada por el tutor.</p>
+                            <p style={{margin:0,fontSize:'0.9rem'}}>Tu nota final está lista. El acta oficial será subida por tu tutor próximamente para finalizar el proceso.</p>
                           </div>
                         )}
                       </div>

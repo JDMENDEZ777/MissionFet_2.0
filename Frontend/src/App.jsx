@@ -15,7 +15,9 @@ import GestionProyectos from './pages/admin/GestionProyectos'; // Nueva página 
 import GestionPasantias from './pages/admin/GestionPasantias'; // Nueva página para gestionar pasantías
 import TutorDashboard from './pages/tutores/tutor';
 import TutorProyectos from './pages/tutores/tutor_proyectos';
+import TutorPasantias from './pages/tutores/tutor_pasantias';
 import EstudianteProyecto from './pages/estudiantes/estudiante_proyecto';
+import EstudiantePasantia from './pages/estudiantes/estudiante_pasantia';
 
 // Forzando el reload de Vite...
 
@@ -59,6 +61,9 @@ function App() {
         <Route path="/tutor/proyectos" element={
           <ProtectedRoute allowedRoles={['tutor']}><TutorProyectos /></ProtectedRoute>
         } />
+        <Route path="/tutor/pasantias" element={
+          <ProtectedRoute allowedRoles={['tutor']}><TutorPasantias /></ProtectedRoute>
+        } />
         <Route path="/tutor/dashboard" element={
           <ProtectedRoute allowedRoles={['tutor']}>
             <TutorDashboard />
@@ -69,6 +74,11 @@ function App() {
         <Route path="/estudiante/proyecto" element={
           <ProtectedRoute allowedRoles={['estudiante']}>
             <EstudianteProyecto />
+          </ProtectedRoute>
+        } />
+        <Route path="/estudiante/pasantia" element={
+          <ProtectedRoute allowedRoles={['estudiante']}>
+            <EstudiantePasantia />
           </ProtectedRoute>
         } />
         

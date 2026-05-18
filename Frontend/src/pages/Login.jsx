@@ -25,7 +25,18 @@ export default function Login() {
       } else if (user.rol === 'tutor') {
         navigate('/tutor/dashboard');
       } else if (user.rol === 'estudiante' || !user.rol) {
-        navigate('/estudiante/proyecto');
+        try {
+          const resp = await api.get('/estudiante/pasantia', {
+            headers: { Authorization: `Bearer ${access_token}` }
+          });
+          if (resp.data.success) {
+            navigate('/estudiante/pasantia');
+          } else {
+            navigate('/estudiante/proyecto');
+          }
+        } catch (err) {
+          navigate('/estudiante/proyecto');
+        }
       } else {
         navigate('/'); // Fallback
       }
