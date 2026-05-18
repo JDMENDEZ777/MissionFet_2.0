@@ -25,16 +25,11 @@ export default function Login() {
       } else if (user.rol === 'tutor') {
         navigate('/tutor/dashboard');
       } else if (user.rol === 'estudiante' || !user.rol) {
-        try {
-          const resp = await api.get('/estudiante/pasantia', {
-            headers: { Authorization: `Bearer ${access_token}` }
-          });
-          if (resp.data.success) {
-            navigate('/estudiante/pasantia');
-          } else {
-            navigate('/estudiante/proyecto');
-          }
-        } catch (err) {
+        if (user.opcion_grado === 'pasantia') {
+          navigate('/estudiante/pasantia');
+        } else if (user.opcion_grado === 'seminario') {
+          navigate('/estudiante/seminario');
+        } else {
           navigate('/estudiante/proyecto');
         }
       } else {

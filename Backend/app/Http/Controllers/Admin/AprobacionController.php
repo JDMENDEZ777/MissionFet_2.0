@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\TwilioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -77,6 +78,16 @@ class AprobacionController extends Controller
             DB::table('solicitudes_registro')->where('id', $id)->delete();
 
             DB::commit();
+
+            // Enviar notificación por WhatsApp si tiene teléfono registrado
+            if (!empty($solicitud->telefono)) {
+                $twilio = new TwilioService();
+                $mensaje = "¡Hola {$solicitud->nombre}! 🎉\n"
+                    . "Tu cuenta en la plataforma Misión FET fue aprobada.\n"
+                    . "Usuario: {$solicitud->email}";
+                $twilio->enviarWhatsApp($solicitud->telefono, $mensaje);
+            }
+
             return response()->json(['message' => 'Usuario aprobado y registrado en historial']);
         } catch (\Exception $e) {
             DB::rollBack();

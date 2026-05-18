@@ -16,8 +16,10 @@ import GestionPasantias from './pages/admin/GestionPasantias'; // Nueva página 
 import TutorDashboard from './pages/tutores/tutor';
 import TutorProyectos from './pages/tutores/tutor_proyectos';
 import TutorPasantias from './pages/tutores/tutor_pasantias';
+import TutorSeminario from './pages/tutores/TutorSeminario';
 import EstudianteProyecto from './pages/estudiantes/estudiante_proyecto';
 import EstudiantePasantia from './pages/estudiantes/estudiante_pasantia';
+import EstudianteSeminario from './pages/estudiantes/EstudianteSeminario';
 
 // Forzando el reload de Vite...
 
@@ -64,6 +66,9 @@ function App() {
         <Route path="/tutor/pasantias" element={
           <ProtectedRoute allowedRoles={['tutor']}><TutorPasantias /></ProtectedRoute>
         } />
+        <Route path="/tutor/seminario" element={
+          <ProtectedRoute allowedRoles={['tutor']}><TutorSeminario /></ProtectedRoute>
+        } />
         <Route path="/tutor/dashboard" element={
           <ProtectedRoute allowedRoles={['tutor']}>
             <TutorDashboard />
@@ -79,6 +84,11 @@ function App() {
         <Route path="/estudiante/pasantia" element={
           <ProtectedRoute allowedRoles={['estudiante']}>
             <EstudiantePasantia />
+          </ProtectedRoute>
+        } />
+        <Route path="/estudiante/seminario" element={
+          <ProtectedRoute allowedRoles={['estudiante']}>
+            <EstudianteSeminario />
           </ProtectedRoute>
         } />
         

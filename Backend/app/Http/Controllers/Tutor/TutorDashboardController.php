@@ -34,7 +34,20 @@ class TutorDashboardController extends Controller
             ->where('avances_proyecto.estado', 'pendiente')
             ->count();
 
-        // 5. Mensajes no leídos (solo de chat de pasantías por ahora)
+        // 5. Seminarios asignados al tutor
+        $total_seminarios = DB::table('seminarios')
+            ->where('tutor_id', $tutor_id)
+            ->count();
+
+        // 6. Entregas de seminarios pendientes de revisión (estado 'entregado')
+        $seminarios_pendientes = DB::table('seminario_entregas')
+            ->join('seminario_actividades', 'seminario_entregas.actividad_id', '=', 'seminario_actividades.id')
+            ->join('seminarios', 'seminario_actividades.seminario_id', '=', 'seminarios.id')
+            ->where('seminarios.tutor_id', $tutor_id)
+            ->where('seminario_entregas.estado', 'entregado')
+            ->count();
+
+        // 7. Mensajes no leídos (solo de chat de pasantías por ahora)
         $mensajes_pasantias = DB::table('mensajes_chat')
             ->join('pasantias', 'mensajes_chat.pasantia_id', '=', 'pasantias.id')
             ->where('pasantias.tutor_id', $tutor_id)
@@ -47,13 +60,16 @@ class TutorDashboardController extends Controller
             'data' => [
                 'total_pasantias' => $total_pasantias,
                 'total_proyectos' => $total_proyectos,
+                'total_seminarios' => $total_seminarios,
                 'pasantias_pendientes' => $pasantias_pendientes,
                 'proyectos_pendientes' => $proyectos_pendientes,
+                'seminarios_pendientes' => $seminarios_pendientes,
                 'mensajes_pasantias' => $mensajes_pasantias,
                 'notificaciones_pasantias' => $pasantias_pendientes + $mensajes_pasantias,
                 'notificaciones_proyectos' => $proyectos_pendientes,
                 'tiene_pasantias' => $total_pasantias > 0,
-                'tiene_proyectos' => $total_proyectos > 0
+                'tiene_proyectos' => $total_proyectos > 0,
+                'tiene_seminarios' => $total_seminarios > 0
             ]
         ]);
     }

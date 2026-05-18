@@ -29,6 +29,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/estudiante/pasantia/asistencias',      [App\Http\Controllers\Estudiante\EstudiantePasantiaController::class, 'subirAsistencia']);
     Route::delete('/estudiante/pasantia/asistencias/{id}', [App\Http\Controllers\Estudiante\EstudiantePasantiaController::class, 'eliminarAsistencia']);
 
+    // ESTUDIANTE: Panel de Seminarios
+    Route::get('/estudiante/seminario',                  [App\Http\Controllers\Estudiante\EstudianteSeminarioController::class, 'index']);
+    Route::get('/estudiante/seminario/actividades',      [App\Http\Controllers\Estudiante\EstudianteSeminarioController::class, 'getActividades']);
+    Route::post('/estudiante/seminario/entregas',        [App\Http\Controllers\Estudiante\EstudianteSeminarioController::class, 'storeEntrega']);
+    Route::get('/estudiante/seminario/recursos',         [App\Http\Controllers\Estudiante\EstudianteSeminarioController::class, 'getRecursos']);
+
     // ADMINISTRADOR
     // ... tus otras rutas ...
     Route::get('/admin/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index']);
@@ -94,6 +100,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tutor/pasantias/evaluaciones/calificar',            [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'calificarEvaluacion']);
     Route::post('/tutor/pasantias/{id}/guardar-acta',                 [App\Http\Controllers\Tutor\TutorPasantiasController::class, 'guardarActa']);
 
+    // Panel Seminario del Tutor
+    Route::get('/tutor/seminario',                                    [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'index']);
+    Route::put('/tutor/seminario/enlace',                             [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'updateEnlace']);
+    Route::get('/tutor/seminario/actividades',                        [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'getActividades']);
+    Route::post('/tutor/seminario/actividades',                       [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'storeActividad']);
+    Route::put('/tutor/seminario/actividades/{id}',                   [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'updateActividad']);
+    Route::delete('/tutor/seminario/actividades/{id}',                [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'destroyActividad']);
+    Route::get('/tutor/seminario/actividades/{id}/entregas',          [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'getEntregas']);
+    Route::post('/tutor/seminario/entregas/{id}/calificar',           [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'calificarEntrega']);
+    Route::get('/tutor/seminario/recursos',                           [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'getRecursos']);
+    Route::post('/tutor/seminario/recursos',                          [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'storeRecurso']);
+    Route::delete('/tutor/seminario/recursos/{id}',                   [App\Http\Controllers\Tutor\TutorSeminarioController::class, 'destroyRecurso']);
 
     Route::get('/admin/aprobaciones', [AprobacionController::class, 'index']);
     Route::get('/admin/historial', [AprobacionController::class, 'getHistorial']);

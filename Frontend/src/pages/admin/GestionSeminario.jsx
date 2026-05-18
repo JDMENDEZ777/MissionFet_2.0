@@ -97,7 +97,8 @@ export default function GestionSeminario() {
   const handleInscribir = async (estudianteId) => {
     try {
       await api.post(`/admin/seminarios/${seminarioSeleccionado.id}/inscribir`, { estudiante_id: estudianteId });
-      abrirVerDetalles(seminarioSeleccionado.id);
+      await abrirVerDetalles(seminarioSeleccionado.id);
+      await fetchDatosIniciales(); // Refrescar la grilla principal
       if(mostrarDisponibles) cargarEstudiantesDisponibles();
     } catch (error) {
       alert(error.response?.data?.error || 'Error al inscribir');
@@ -108,7 +109,8 @@ export default function GestionSeminario() {
     if(!window.confirm('¿Eliminar a este estudiante del seminario?')) return;
     try {
       await api.delete(`/admin/seminarios/${seminarioSeleccionado.id}/inscripcion/${estudianteId}`);
-      abrirVerDetalles(seminarioSeleccionado.id);
+      await abrirVerDetalles(seminarioSeleccionado.id);
+      await fetchDatosIniciales(); // Refrescar la grilla principal
     } catch (error) {
       alert('Error al eliminar inscripción');
     }
@@ -359,7 +361,7 @@ export default function GestionSeminario() {
       {modalVer && seminarioSeleccionado && (
         <div className="modal" style={{display: 'block'}}>
           <div className="modal-content">
-            <span className="close" onClick={() => setModalVer(false)}>&times;</span>
+            <span className="close" onClick={() => { setModalVer(false); fetchDatosIniciales(); }}>&times;</span>
             <h2>Detalles del Seminario</h2>
             
             <div className="seminario-detalle">
@@ -481,6 +483,18 @@ export default function GestionSeminario() {
                       <option value="activo">Activo</option>
                       <option value="finalizado">Finalizado</option>
                       <option value="cancelado">Cancelado</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-field full-width">
+                    <label>Tutor Encargado</label>
+                    <select value={formEditar.tutor_id} onChange={e => setFormEditar({...formEditar, tutor_id: e.target.value})}>
+                      <option value="">Seleccione un tutor</option>
+                      {tutores.map(t => (
+                        <option key={t.id} value={t.id}>{t.name || t.nombre}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

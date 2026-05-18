@@ -8,13 +8,16 @@ const TutorDashboard = () => {
     const [stats, setStats] = useState({
         total_pasantias: 0,
         total_proyectos: 0,
+        total_seminarios: 0,
         pasantias_pendientes: 0,
         proyectos_pendientes: 0,
+        seminarios_pendientes: 0,
         mensajes_pasantias: 0,
         notificaciones_pasantias: 0,
         notificaciones_proyectos: 0,
         tiene_pasantias: false,
-        tiene_proyectos: false
+        tiene_proyectos: false,
+        tiene_seminarios: false
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -59,6 +62,10 @@ const TutorDashboard = () => {
 
     const goToProyectos = () => {
         if (stats.tiene_proyectos) navigate('/tutor/proyectos');
+    };
+
+    const goToSeminarios = () => {
+        if (stats.tiene_seminarios) navigate('/tutor/seminario');
     };
 
     if (loading) return <div className="portal-tutor-wrapper"><div className="main-content">Cargando portal...</div></div>;
@@ -154,6 +161,40 @@ const TutorDashboard = () => {
                             {!stats.tiene_proyectos && (
                                 <div className="option-disabled-message">
                                     <i className="fas fa-lock"></i> No tiene proyectos asignados
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Tarjeta Seminarios */}
+                        <div className={`option-card ${!stats.tiene_seminarios ? 'disabled' : ''}`}>
+                            <div className="option-icon">
+                                <i className="fas fa-chalkboard-teacher"></i>
+                                {stats.seminarios_pendientes > 0 && (
+                                    <span className="notification-badge">{stats.seminarios_pendientes}</span>
+                                )}
+                            </div>
+                            <h3>Gestionar Seminarios</h3>
+                            <p>Supervise y califique el seminario asignado</p>
+                            <div className="option-stats">
+                                <div className="stat-item">
+                                    <span className="stat-value">{stats.total_seminarios}</span>
+                                    <span className="stat-label">Seminarios</span>
+                                </div>
+                                <div className="stat-item">
+                                    <span className="stat-value">{stats.seminarios_pendientes}</span>
+                                    <span className="stat-label">Pendientes</span>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={goToSeminarios} 
+                                className={`option-button ${!stats.tiene_seminarios ? 'disabled' : ''}`}
+                                disabled={!stats.tiene_seminarios}
+                            >
+                                <i className="fas fa-arrow-right"></i> Acceder
+                            </button>
+                            {!stats.tiene_seminarios && (
+                                <div className="option-disabled-message">
+                                    <i className="fas fa-lock"></i> No tiene seminarios asignados
                                 </div>
                             )}
                         </div>
