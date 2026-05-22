@@ -323,8 +323,8 @@ export default function GestionProyectos() {
                           <p><strong>Tipo:</strong> {p.tipo || 'Proyecto'}</p>
                           {p.archivo_proyecto && (
                             <p><strong>Archivo:</strong>{' '}
-                              <a className="gp-archivo-link" href={`http://localhost:8000/storage/proyectos/${p.archivo_proyecto}`}
-                                target="_blank" rel="noreferrer">Ver archivo</a>
+                              <a className="gp-archivo-link" href={`http://localhost:8000/storage/proyectos/${encodeURIComponent(p.archivo_proyecto)}`}
+                                download={p.archivo_proyecto} target="_blank" rel="noreferrer">Ver archivo</a>
                             </p>
                           )}
                           <div className="gp-proyecto-descripcion">
@@ -362,8 +362,8 @@ export default function GestionProyectos() {
                 <p><strong>Tipo:</strong> {proyectoActual.tipo || 'Proyecto'}</p>
                 {proyectoActual.archivo_proyecto && (
                   <p><strong>Archivo:</strong>{' '}
-                    <a className="gp-archivo-link" href={`http://localhost:8000/storage/proyectos/${proyectoActual.archivo_proyecto}`}
-                      target="_blank" rel="noreferrer">{proyectoActual.archivo_proyecto}</a>
+                    <a className="gp-archivo-link" href={`http://localhost:8000/storage/proyectos/${encodeURIComponent(proyectoActual.archivo_proyecto)}`}
+                      download={proyectoActual.archivo_proyecto} target="_blank" rel="noreferrer">{proyectoActual.archivo_proyecto}</a>
                   </p>
                 )}
                 <h4>Descripción:</h4>
@@ -436,8 +436,8 @@ export default function GestionProyectos() {
                   {proyectoActual.archivo_proyecto && (
                     <div className="gp-archivo-actual">
                       Archivo actual:{' '}
-                      <a className="gp-archivo-link" href={`http://localhost:8000/storage/proyectos/${proyectoActual.archivo_proyecto}`}
-                        target="_blank" rel="noreferrer">{proyectoActual.archivo_proyecto}</a>
+                      <a className="gp-archivo-link" href={`http://localhost:8000/storage/proyectos/${encodeURIComponent(proyectoActual.archivo_proyecto)}`}
+                        download={proyectoActual.archivo_proyecto} target="_blank" rel="noreferrer">{proyectoActual.archivo_proyecto}</a>
                       {' '}(subir uno nuevo lo reemplazará)
                     </div>
                   )}

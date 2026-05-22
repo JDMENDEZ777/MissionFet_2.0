@@ -44,7 +44,7 @@ export default function EstudiantePasantia() {
   const [firmaEstudianteUrl, setFirmaEstudianteUrl] = useState('');
   const [firmaFile, setFirmaFile] = useState(null);
   const [uploadingFirma, setUploadingFirma] = useState(false);
-
+  const [aceptaTerminosEstudiante, setAceptaTerminosEstudiante] = useState(false);
   // FORMULARIO: ACTA DE INICIO (PE-PCA-F-005)
   const [actaForm, setActaForm] = useState({
     fecha: '',
@@ -516,7 +516,18 @@ export default function EstudiantePasantia() {
                       <form onSubmit={handleSubirFirma} className="eps-form-group">
                         <label>Subir foto de firma manuscrita transparente:</label>
                         <input type="file" accept="image/*" onChange={(e) => setFirmaFile(e.target.files[0])} style={{ padding: '0.25rem', border: '1px solid var(--eps-border)', borderRadius: '4px' }} />
-                        <button type="submit" className="eps-btn eps-btn-primary" style={{ marginTop: '1rem', alignSelf: 'flex-start' }} disabled={uploadingFirma || !firmaFile}>
+                        <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--eps-text-muted)' }}>
+                          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={aceptaTerminosEstudiante} 
+                              onChange={(e) => setAceptaTerminosEstudiante(e.target.checked)} 
+                              style={{ marginTop: '0.2rem' }}
+                            />
+                            <span>Acepto los términos y condiciones de tratamiento de datos. Autorizo la recolección, almacenamiento y uso de mi firma digital exclusivamente para fines académicos, validación de actas y documentos institucionales del proceso de pasantía.</span>
+                          </label>
+                        </div>
+                        <button type="submit" className="eps-btn eps-btn-primary" style={{ marginTop: '0.5rem', alignSelf: 'flex-start' }} disabled={uploadingFirma || !firmaFile || !aceptaTerminosEstudiante}>
                           {uploadingFirma ? 'Guardando...' : 'Guardar Firma'}
                         </button>
                       </form>

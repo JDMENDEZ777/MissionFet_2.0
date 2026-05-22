@@ -447,7 +447,7 @@ export default function TutorProyectos() {
                         Este proyecto ha concluido exitosamente y se ha cargado el Acta de Finalización correspondiente.
                       </p>
                       {detalle.archivo_acta && (
-                        <a className="tp-btn tp-btn-success" href={`http://localhost:8000/uploads/proyectos/actas/${detalle.archivo_acta}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+                        <a className="tp-btn tp-btn-success" href={`http://localhost:8000/uploads/proyectos/actas/${encodeURIComponent(detalle.archivo_acta)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
                           <i className="fas fa-file-download"></i> Descargar Acta de Finalización
                         </a>
                       )}
@@ -517,7 +517,7 @@ export default function TutorProyectos() {
                                 {av.comentario_estudiante && <p style={{marginTop:'0.3rem',fontSize:'0.85rem',background:'rgba(100,116,139,.07)',padding:'0.4rem',borderRadius:'0.25rem'}}><strong>Estudiante:</strong> {av.comentario_estudiante}</p>}
                                 {av.comentario_tutor && <p style={{marginTop:'0.3rem',fontSize:'0.85rem',background:'rgba(3,151,8,.07)',padding:'0.4rem',borderRadius:'0.25rem'}}><strong>Tu comentario:</strong> {av.comentario_tutor}</p>}
                                 {av.archivo_entregado && (
-                                  <a className="tp-download-btn" style={{marginTop:'0.4rem'}} href={`http://localhost:8000/uploads/proyectos/entregas/${av.archivo_entregado}`} target="_blank" rel="noreferrer">
+                                  <a className="tp-download-btn" style={{marginTop:'0.4rem'}} href={`http://localhost:8000/uploads/proyectos/entregas/${encodeURIComponent(av.archivo_entregado)}`} target="_blank" rel="noreferrer">
                                     <i className="fas fa-file-download"></i> Ver entrega
                                   </a>
                                 )}
@@ -555,7 +555,7 @@ export default function TutorProyectos() {
                           </div>
                         )}
                         {av.archivo_entregado && (
-                          <a className="tp-download-btn" href={`http://localhost:8000/uploads/proyectos/entregas/${av.archivo_entregado}`} target="_blank" rel="noreferrer">
+                          <a className="tp-download-btn" href={`http://localhost:8000/uploads/proyectos/entregas/${encodeURIComponent(av.archivo_entregado)}`} target="_blank" rel="noreferrer">
                             <i className="fas fa-file-download"></i> Ver entrega
                           </a>
                         )}
@@ -729,7 +729,7 @@ export default function TutorProyectos() {
             )}
 
             {modalAvance.archivo_entregado && (
-              <a href={`/uploads/proyectos/entregas/${modalAvance.archivo_entregado}`}
+              <a href={`/uploads/proyectos/entregas/${encodeURIComponent(modalAvance.archivo_entregado)}`}
                 target="_blank" rel="noreferrer"
                 style={{display:'inline-flex', alignItems:'center', gap:'0.4rem', color:'var(--tp-primary)', marginBottom:'1rem', fontSize:'0.9rem', textDecoration:'none'}}>
                 <i className="fas fa-file-pdf"></i> Ver archivo entregado

@@ -134,12 +134,12 @@ class PasantiaController extends Controller
             if ($request->hasFile('archivo_documento')) {
                 // Eliminar archivo anterior
                 $old = DB::table('pasantias')->where('id', $id)->value('archivo_documento');
-                if ($old && Storage::exists("public/pasantias/{$old}")) {
-                    Storage::delete("public/pasantias/{$old}");
+                if ($old && Storage::disk('public')->exists("pasantias/{$old}")) {
+                    Storage::disk('public')->delete("pasantias/{$old}");
                 }
                 $file = $request->file('archivo_documento');
                 $nombreArchivo = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('public/pasantias', $nombreArchivo);
+                $file->storeAs('pasantias', $nombreArchivo, 'public');
                 $updateData['archivo_documento'] = $nombreArchivo;
             }
 

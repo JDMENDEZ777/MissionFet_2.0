@@ -250,3 +250,43 @@ html, body {
         font-size: 16px !important; /* Mejor para tap en celular */
     }
 }
+
+/* ── Estilos de Validación ──────────────────────────────── */
+.mensaje {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    text-align: center;
+    background-color: rgba(0, 255, 0, 0.2);
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.mensaje.error {
+    background-color: rgba(255, 0, 0, 0.2);
+    color: #ffcccc;
+}
+
+.field-error {
+    display: block;
+    font-size: 11px;
+    color: #ffaaaa;
+    margin-top: 4px;
+    animation: fadeInErr 0.2s ease;
+}
+
+@keyframes fadeInErr {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.login-form-group:has(.field-error) input {
+    box-shadow: 0 0 0 2px rgba(255, 80, 80, 0.7) !important;
+}
+
+.hint-max {
+    font-size: 10px;
+    font-weight: 400;
+    color: #b0ddb0;
+    margin-left: 4px;
+}

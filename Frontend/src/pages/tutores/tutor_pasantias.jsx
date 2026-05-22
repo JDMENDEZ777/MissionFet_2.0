@@ -60,6 +60,8 @@ export default function TutorPasantias() {
   const [firmaTutorFile, setFirmaTutorFile] = useState(null);
   const [firmaSupervisorFile, setFirmaSupervisorFile] = useState(null);
   const [uploadingFirma, setUploadingFirma] = useState(false);
+  const [aceptaTerminosTutor, setAceptaTerminosTutor] = useState(false);
+  const [aceptaTerminosSupervisor, setAceptaTerminosSupervisor] = useState(false);
 
   // Formulario de Evaluación Cuantitativa (Anexo 2)
   const [corteEval, setCorteEval] = useState(1); // 1 = 40%, 2 = 60%
@@ -694,11 +696,22 @@ export default function TutorPasantias() {
                     onChange={(e) => setFirmaTutorFile(e.target.files[0])}
                     style={{ padding: '0.5rem', border: '1px solid var(--tps-border)', borderRadius: '0.375rem' }}
                   />
+                  <div style={{ marginTop: '1rem', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--tps-text-muted)' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={aceptaTerminosTutor} 
+                        onChange={(e) => setAceptaTerminosTutor(e.target.checked)} 
+                        style={{ marginTop: '0.2rem' }}
+                      />
+                      <span>Acepto los términos y condiciones de tratamiento de datos. Autorizo el uso de mi firma digital exclusivamente para la firma de actas, planes de trabajo y evaluaciones de la institución.</span>
+                    </label>
+                  </div>
                   <button
                     type="submit"
                     className="tps-btn tps-btn-primary"
-                    style={{ marginTop: '1rem', alignSelf: 'flex-start' }}
-                    disabled={uploadingFirma || !firmaTutorFile}
+                    style={{ marginTop: '0.5rem', alignSelf: 'flex-start' }}
+                    disabled={uploadingFirma || !firmaTutorFile || !aceptaTerminosTutor}
                   >
                     {uploadingFirma ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-upload"></i>} Guardar Firma
                   </button>
@@ -983,7 +996,18 @@ export default function TutorPasantias() {
                                   onChange={(e) => setFirmaSupervisorFile(e.target.files[0])}
                                   style={{ padding: '0.25rem', border: '1px solid var(--tps-border)', borderRadius: '4px', background: '#fff' }}
                                 />
-                                <button type="submit" className="tps-btn tps-btn-primary" disabled={uploadingFirma || !firmaSupervisorFile}>
+                                <div style={{ width: '100%', marginTop: '0.5rem', marginBottom: '0.5rem', fontSize: '0.8rem', color: 'var(--tps-text-muted)' }}>
+                                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
+                                    <input 
+                                      type="checkbox" 
+                                      checked={aceptaTerminosSupervisor} 
+                                      onChange={(e) => setAceptaTerminosSupervisor(e.target.checked)} 
+                                      style={{ marginTop: '0.2rem' }}
+                                    />
+                                    <span>Certifico contar con la autorización explícita del supervisor o representante de la empresa para digitalizar y plasmar su firma, aceptando las políticas de privacidad y protección de datos.</span>
+                                  </label>
+                                </div>
+                                <button type="submit" className="tps-btn tps-btn-primary" disabled={uploadingFirma || !firmaSupervisorFile || !aceptaTerminosSupervisor}>
                                   Cargar Firma Supervisor
                                 </button>
                               </form>

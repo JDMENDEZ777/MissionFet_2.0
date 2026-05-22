@@ -27,6 +27,11 @@ export default function EstudianteProyecto() {
   const [proyecto, setProyecto] = useState(null);
   const [avances, setAvances] = useState([]);
   const [notificaciones, setNotificaciones] = useState(0);
+  
+  const [toastNotif, setToastNotif] = useState(null);
+  const knownAvancesRef = useRef(0);
+  const knownMensajesRef = useRef(0);
+  const isFirstPoll = useRef(true);
 
   // Chat
   const [mensajes, setMensajes] = useState([]);
@@ -68,22 +73,51 @@ export default function EstudianteProyecto() {
     }
   };
 
-  // --- CHAT POLLING ---
-  const startPolling = useCallback(() => {
-    stopPolling();
-    pollingRef.current = setInterval(() => loadMensajes(), 5000);
-  }, []);
-
-  const stopPolling = () => {
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-  };
-
+  // --- GLOBAL POLLING (NOTIFICACIONES Y CHAT) ---
   useEffect(() => {
-    return () => stopPolling();
-  }, []);
+    const interval = setInterval(async () => {
+      if (!user || !user.id) return;
+      try {
+        const r1 = await axios.get(`${API}/estudiante/proyecto`, getHeaders());
+        if (r1.data.success) {
+          setProyecto(r1.data.proyecto);
+          const avs = r1.data.avances || [];
+          setAvances(avs);
+          setNotificaciones(r1.data.notificaciones || 0);
+
+          let tutorRespCount = 0;
+          avs.forEach(a => { if (a.comentario_tutor) tutorRespCount++; });
+          
+          if (!isFirstPoll.current && tutorRespCount > knownAvancesRef.current) {
+            setToastNotif('El tutor ha respondido a tu avance de proyecto.');
+            setTimeout(() => setToastNotif(null), 5000);
+          }
+          knownAvancesRef.current = tutorRespCount;
+        }
+
+        const r2 = await axios.get(`${API}/estudiante/proyecto/mensajes`, getHeaders());
+        if (r2.data.success) {
+          const msgs = r2.data.mensajes || [];
+          setMensajes(msgs);
+
+          let tutorMsgsCount = 0;
+          msgs.forEach(m => {
+            if (m.emisor_id !== user.id) tutorMsgsCount++;
+          });
+
+          if (!isFirstPoll.current && tutorMsgsCount > knownMensajesRef.current) {
+            setToastNotif('Tienes un nuevo mensaje del tutor en el chat.');
+            setTimeout(() => setToastNotif(null), 5000);
+            setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+          }
+          knownMensajesRef.current = tutorMsgsCount;
+        }
+
+        isFirstPoll.current = false;
+      } catch (e) {}
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const loadMensajes = async () => {
     try {
@@ -93,7 +127,7 @@ export default function EstudianteProyecto() {
         setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
       }
     } catch (e) {
-      // silencioso en polling
+      // silencioso
     }
   };
 
@@ -102,9 +136,6 @@ export default function EstudianteProyecto() {
     setSidebarOpen(false);
     if (s === 'chat') {
       loadMensajes();
-      startPolling();
-    } else {
-      stopPolling();
     }
   };
 
@@ -281,6 +312,16 @@ export default function EstudianteProyecto() {
 
       {/* MAIN */}
       <div className="ep-main">
+        {toastNotif && (
+          <div style={{
+            position: 'fixed', top: '20px', right: '20px', background: '#0f766e', color: 'white',
+            padding: '1rem 1.5rem', borderRadius: '8px', zIndex: 9999, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            display: 'flex', alignItems: 'center', gap: '0.75rem', fontWeight: 600
+          }}>
+            <i className="fas fa-bell fa-shake"></i>
+            <span>{toastNotif}</span>
+          </div>
+        )}
         <header className="ep-header">
           <div style={{display:'flex', alignItems:'center'}}>
             <button className="ep-menu-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}><i className="fas fa-bars"></i></button>
@@ -314,7 +355,7 @@ export default function EstudianteProyecto() {
                   </div>
                   {proyecto.archivo_proyecto && (
                     <div style={{marginTop:'1.5rem', textAlign:'center'}}>
-                      <a href={`http://localhost:8000/uploads/proyectos/documentos/${proyecto.archivo_proyecto}`} target="_blank" rel="noreferrer" className="ep-btn">
+                      <a href={`http://localhost:8000/storage/proyectos/${encodeURIComponent(proyecto.archivo_proyecto)}`} target="_blank" rel="noreferrer" className="ep-btn">
                         <i className="fas fa-file-pdf"></i> Ver Documento Inicial
                       </a>
                     </div>
@@ -409,7 +450,7 @@ export default function EstudianteProyecto() {
                               <td>Avance {av.numero_avance}</td>
                               <td>
                                 {av.archivo_entregado ? (
-                                  <a href={`http://localhost:8000/uploads/proyectos/entregas/${av.archivo_entregado}`} target="_blank" rel="noreferrer" style={{color:'var(--ep-primary)',textDecoration:'none'}}>
+                                  <a href={`http://localhost:8000/uploads/proyectos/entregas/${encodeURIComponent(av.archivo_entregado)}`} target="_blank" rel="noreferrer" style={{color:'var(--ep-primary)',textDecoration:'none'}}>
                                     <i className="fas fa-file-pdf"></i> PDF
                                   </a>
                                 ) : '—'}
@@ -463,7 +504,7 @@ export default function EstudianteProyecto() {
                           <div className="ep-msg-content">
                             {m.archivo && (
                               <div style={{marginBottom:'0.5rem'}}>
-                                <a href={`http://localhost:8000/uploads/proyectos/chat/${m.archivo}`} target="_blank" rel="noreferrer" style={{color:'inherit',textDecoration:'underline'}}>
+                                <a href={`http://localhost:8000/uploads/proyectos/chat/${encodeURIComponent(m.archivo)}`} target="_blank" rel="noreferrer" style={{color:'inherit',textDecoration:'underline'}}>
                                   <i className="fas fa-paperclip"></i> {m.archivo}
                                 </a>
                               </div>
@@ -526,7 +567,7 @@ export default function EstudianteProyecto() {
                               Tu tutor ha cargado el Acta de Finalización y tu proyecto se encuentra oficialmente concluido.
                             </p>
                             <div style={{textAlign:'center'}}>
-                              <a href={`http://localhost:8000/uploads/proyectos/actas/${proyecto.archivo_acta}`} target="_blank" rel="noreferrer" className="ep-btn" style={{background:'#039708', color:'white', display:'inline-flex', alignItems:'center', gap:'0.4rem', textDecoration:'none'}}>
+                              <a href={`http://localhost:8000/uploads/proyectos/actas/${encodeURIComponent(proyecto.archivo_acta)}`} target="_blank" rel="noreferrer" className="ep-btn" style={{background:'#039708', color:'white', display:'inline-flex', alignItems:'center', gap:'0.4rem', textDecoration:'none'}}>
                                 <i className="fas fa-file-download"></i> Descargar Acta de Finalización
                               </a>
                             </div>

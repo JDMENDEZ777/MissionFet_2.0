@@ -3,6 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
  import './GestionUsuarios.css'; // 
 
+// ── Utilidades de sanitización anti-inyección ────────────────────────────────
+const sanitize = {
+  email: (v) => v.replace(/[<>"'`;\\]/g, ''),
+  alfanumerico: (v) => v.replace(/[^A-Za-z0-9]/g, ''),
+  numeros: (v) => v.replace(/\D/g, ''),
+  letras: (v) => v.replace(/[^A-Za-záéíóúÁÉÍÓÚñÑüÜ\s]/g, ''),
+};
+
 export default function GestionUsuarios() {
   const navigate = useNavigate();
   const [navActive, setNavActive] = useState(false);
@@ -79,13 +87,38 @@ export default function GestionUsuarios() {
   // --- PETICIONES AL BACKEND ---
   const handleUpdate = async (e) => {
     e.preventDefault();
+    
+    // Sanitización final antes de enviar (capa de seguridad extra)
+    const payload = {
+      ...editForm,
+      name:              editForm.name ? sanitize.letras(editForm.name).trim().slice(0, 50) : '',
+      nombre:            editForm.nombre ? sanitize.letras(editForm.nombre).trim().slice(0, 50) : '',
+      email:             editForm.email ? sanitize.email(editForm.email).trim() : '',
+      documento:         editForm.documento ? sanitize.numeros(editForm.documento).slice(0, 10) : '',
+      codigo_estudiante: editForm.codigo_estudiante ? sanitize.alfanumerico(editForm.codigo_estudiante).slice(0, 15) : '',
+      telefono:          editForm.telefono ? sanitize.numeros(editForm.telefono).slice(0, 10) : '',
+    };
+
     try {
-      await api.put(`/admin/usuarios/${userActivo.id}`, editForm);
+      await api.put(`/admin/usuarios/${userActivo.id}`, payload);
       mostrarMensaje('Usuario actualizado correctamente', 'exito');
       setModalEdit(false);
       fetchUsuarios(); // Recargamos la tabla
     } catch (error) {
-      mostrarMensaje('Error al actualizar el usuario', 'error');
+      const status = error.response?.status;
+      let msgAmigable = 'Error al actualizar el usuario. Intente de nuevo más tarde.';
+      if (status === 422) {
+        const serverErrors = error.response?.data?.errors;
+        if (serverErrors) {
+          const primerError = Object.values(serverErrors).flat()[0];
+          if (primerError?.includes('already been taken') || primerError?.includes('ya ha sido tomado')) {
+            msgAmigable = 'El correo electrónico, documento o código ya está registrado.';
+          } else if (primerError) {
+            msgAmigable = primerError;
+          }
+        }
+      }
+      mostrarMensaje(msgAmigable, 'error');
     }
   };
 
@@ -280,12 +313,31 @@ export default function GestionUsuarios() {
                 <div className="form-group">
                   <label>Nombre:</label>
                   {/* Nota: Usamos name o nombre dependiendo de cómo esté en BD */}
-                  <input type="text" value={editForm.name || editForm.nombre || ''} onChange={(e) => setEditForm({...editForm, name: e.target.value})} required />
+                  <input 
+                    type="text" 
+                    value={editForm.name || editForm.nombre || ''} 
+                    onChange={(e) => {
+                      const cleaned = sanitize.letras(e.target.value).slice(0, 50);
+                      setEditForm({ ...editForm, name: cleaned, nombre: cleaned });
+                    }} 
+                    maxLength={50}
+                    placeholder="Solo letras, máx. 50"
+                    required 
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Email:</label>
-                  <input type="email" value={editForm.email || ''} onChange={(e) => setEditForm({...editForm, email: e.target.value})} required />
+                  <input 
+                    type="email" 
+                    value={editForm.email || ''} 
+                    onChange={(e) => {
+                      const cleaned = sanitize.email(e.target.value);
+                      setEditForm({ ...editForm, email: cleaned });
+                    }} 
+                    placeholder="ejemplo@fet.edu.co"
+                    required 
+                  />
                 </div>
 
                 <div className="form-group">
@@ -299,17 +351,47 @@ export default function GestionUsuarios() {
 
                 <div className="form-group">
                   <label>Documento:</label>
-                  <input type="text" value={editForm.documento || ''} onChange={(e) => setEditForm({...editForm, documento: e.target.value})} required />
+                  <input 
+                    type="text" 
+                    inputMode="numeric"
+                    value={editForm.documento || ''} 
+                    onChange={(e) => {
+                      const cleaned = sanitize.numeros(e.target.value).slice(0, 10);
+                      setEditForm({ ...editForm, documento: cleaned });
+                    }} 
+                    maxLength={10}
+                    placeholder="Solo números, máx. 10"
+                    required 
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Código:</label>
-                  <input type="text" value={editForm.codigo_estudiante || ''} onChange={(e) => setEditForm({...editForm, codigo_estudiante: e.target.value})} />
+                  <input 
+                    type="text" 
+                    value={editForm.codigo_estudiante || ''} 
+                    onChange={(e) => {
+                      const cleaned = sanitize.alfanumerico(e.target.value).slice(0, 15);
+                      setEditForm({ ...editForm, codigo_estudiante: cleaned });
+                    }} 
+                    maxLength={15}
+                    placeholder="Letras y números, máx. 15"
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Teléfono:</label>
-                  <input type="text" value={editForm.telefono || ''} onChange={(e) => setEditForm({...editForm, telefono: e.target.value})} />
+                  <input 
+                    type="text" 
+                    inputMode="numeric"
+                    value={editForm.telefono || ''} 
+                    onChange={(e) => {
+                      const cleaned = sanitize.numeros(e.target.value).slice(0, 10);
+                      setEditForm({ ...editForm, telefono: cleaned });
+                    }} 
+                    maxLength={10}
+                    placeholder="Solo números, máx. 10"
+                  />
                 </div>
 
                 <div className="form-group">

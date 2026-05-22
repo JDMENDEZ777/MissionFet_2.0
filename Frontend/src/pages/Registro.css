@@ -194,3 +194,29 @@
         margin-bottom: 20px !important;
     }
 }
+
+/* ── Validaciones por campo ──────────────────────────────── */
+.field-error {
+    display: block;
+    font-size: 11px;
+    color: #ffaaaa;
+    margin-top: 4px;
+    animation: fadeInErr 0.2s ease;
+}
+
+@keyframes fadeInErr {
+    from { opacity: 0; transform: translateY(-3px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.registro-form-group:has(.field-error) input,
+.registro-form-group:has(.field-error) select {
+    box-shadow: 0 0 0 2px rgba(255, 80, 80, 0.7) !important;
+}
+
+.hint-max {
+    font-size: 10px;
+    font-weight: 400;
+    color: #b0ddb0;
+    margin-left: 4px;
+}

@@ -71,8 +71,9 @@ class ProyectoController extends Controller
             $archivo_nombre = null;
             if ($request->hasFile('archivo_proyecto')) {
                 $file = $request->file('archivo_proyecto');
-                $nombreArchivo = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('public/proyectos', $nombreArchivo);
+                $originalName = $file->getClientOriginalName();
+                $nombreArchivo = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $originalName);
+                $file->storeAs('proyectos', $nombreArchivo, 'public');
                 $archivo_nombre = $nombreArchivo;
             }
 
@@ -124,12 +125,13 @@ class ProyectoController extends Controller
             if ($request->hasFile('archivo_proyecto')) {
                 // Eliminar archivo anterior
                 $old = DB::table('proyectos')->where('id', $id)->value('archivo_proyecto');
-                if ($old && Storage::exists("public/proyectos/{$old}")) {
-                    Storage::delete("public/proyectos/{$old}");
+                if ($old && Storage::disk('public')->exists("proyectos/{$old}")) {
+                    Storage::disk('public')->delete("proyectos/{$old}");
                 }
                 $file = $request->file('archivo_proyecto');
-                $nombreArchivo = time() . '_' . $file->getClientOriginalName();
-                $file->storeAs('public/proyectos', $nombreArchivo);
+                $originalName = $file->getClientOriginalName();
+                $nombreArchivo = preg_replace('/[^A-Za-z0-9.\-_]/', '_', $originalName);
+                $file->storeAs('proyectos', $nombreArchivo, 'public');
                 $updateData['archivo_proyecto'] = $nombreArchivo;
             }
 

@@ -101,13 +101,27 @@ export default function Reportes() {
       let fila = [], cols = filas[i].querySelectorAll('td, th');
       
       for (let j = 0; j < cols.length; j++) {
-        let texto = cols[j].innerText.replace(/"/g, '""');
+        let elemento = cols[j];
+        let texto = elemento.innerText.trim();
+        
+        // Si el elemento contiene una barra de progreso, extraemos el porcentaje de avance
+        const progressFill = elemento.querySelector('.re-progress-fill');
+        if (progressFill && progressFill.style.width) {
+          texto = progressFill.style.width;
+        }
+        
+        // Escapar comillas dobles
+        texto = texto.replace(/"/g, '""');
         fila.push('"' + texto + '"');
       }
-      csv.push(fila.join(','));
+      csv.push(fila.join(';'));
     }
     
-    const csvFile = new Blob(["\ufeff" + csv.join('\n')], {type: 'text/csv;charset=utf-8;'});
+    // Agregamos BOM de UTF-8 para que Excel reconozca los acentos y eñes correctamente
+    // Nota: Evitamos usar "sep=;\n" porque en muchas versiones de Excel anula el BOM y rompe la codificación.
+    const csvContent = "\ufeff" + csv.join('\n');
+    const csvFile = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
     const link = document.createElement('a');
     link.href = URL.createObjectURL(csvFile);
     link.download = `${nombreArchivo}_${formatearFecha(new Date()).replace(/\//g, '-')}.csv`;
